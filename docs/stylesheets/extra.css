@@ -34,32 +34,87 @@
   --md-accent-fg-color:              #00BCD4;
 }
 
-/* ---- 首页 Hero ---- */
+/* ---- 首页 Hero: 魔幻科技感 ---- */
 .cyber-hero {
+  position: relative;
   text-align: center;
-  padding: 3.5rem 1rem 2.5rem;
+  padding: 5rem 1rem 4rem;
+  overflow: hidden;
 }
 
+/* 动态渐变光晕背景 */
+.cyber-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%; right: -50%; bottom: -50%;
+  background:
+    radial-gradient(ellipse at 30% 50%, rgba(103, 58, 183, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 50%, rgba(0, 229, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(156, 39, 176, 0.1) 0%, transparent 40%);
+  animation: heroPulse 5s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+/* 点阵网格覆盖层 */
+.cyber-hero::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: radial-gradient(rgba(0, 229, 255, 0.12) 1px, transparent 1px);
+  background-size: 28px 28px;
+  z-index: 0;
+  animation: dotDrift 25s linear infinite;
+}
+
+.cyber-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes heroPulse {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes dotDrift {
+  0% { background-position: 0 0; }
+  100% { background-position: 28px 28px; }
+}
+
+/* 标题: 渐变文字 + 辉光动画 */
 .cyber-hero h1 {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
+  font-size: 2.8rem;
+  margin-bottom: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 [data-md-color-scheme="slate"] .cyber-hero h1 {
-  background: linear-gradient(135deg, #b388ff, #00e5ff);
+  background: linear-gradient(135deg, #b388ff 0%, #00e5ff 40%, #84ffff 70%, #b388ff 100%);
+  background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: gradientShift 4s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 30px rgba(0, 229, 255, 0.3));
 }
 
 [data-md-color-scheme="default"] .cyber-hero h1 {
-  background: linear-gradient(135deg, #651FFF, #00BCD4);
+  background: linear-gradient(135deg, #651FFF 0%, #00BCD4 40%, #0097A7 70%, #651FFF 100%);
+  background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: gradientShift 4s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 20px rgba(0, 188, 212, 0.3));
 }
 
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* 标语 */
 .hero-tagline {
   font-size: 1.15rem;
   font-weight: 500;
@@ -68,6 +123,7 @@
 
 [data-md-color-scheme="slate"] .hero-tagline {
   color: #80deea;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
 }
 
 [data-md-color-scheme="default"] .hero-tagline {
@@ -76,6 +132,30 @@
 
 .cyber-hero .md-button {
   margin: 0.3rem;
+}
+
+/* ---- 分隔线: 渐变发光 ---- */
+[data-md-color-scheme="slate"] .md-typeset hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.3), transparent);
+  margin: 2rem 0;
+}
+
+/* ---- 卡片: 玻璃拟态 + 悬浮幻光 ---- */
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > :is(ul, ol) > li {
+  background: linear-gradient(135deg, rgba(20, 23, 37, 0.9), rgba(26, 30, 48, 0.8));
+  border: 1px solid rgba(103, 58, 183, 0.25);
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > :is(ul, ol) > li:hover {
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
 }
 
 /* ---- 首页页脚 ---- */
@@ -278,19 +358,6 @@
   color: #00e5ff;
 }
 
-/* ---- 卡片式内容区 (为未来 grid cards 准备) ---- */
-[data-md-color-scheme="slate"] .md-typeset .grid.cards > :is(ul, ol) > li {
-  border: 1px solid rgba(103, 58, 183, 0.2);
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-[data-md-color-scheme="slate"] .md-typeset .grid.cards > :is(ul, ol) > li:hover {
-  border-color: rgba(0, 229, 255, 0.3);
-  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.06);
-}
-
 /* ---- TOC 跟随高亮 ---- */
 [data-md-color-scheme="slate"] .md-nav__link--passed {
   color: #8890b0;
@@ -298,58 +365,4 @@
 
 [data-md-color-scheme="slate"] .md-nav__link--active {
   color: #00e5ff;
-}
-
-/* ---- Alpine.js 学习路径推荐器 ---- */
-.path-finder {
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  margin: 1.5rem 0;
-}
-
-[data-md-color-scheme="slate"] .path-finder {
-  background: #141725;
-  border: 1px solid rgba(103, 58, 183, 0.2);
-}
-
-[data-md-color-scheme="default"] .path-finder {
-  background: #f0edf8;
-  border: 1px solid rgba(103, 58, 183, 0.15);
-}
-
-.path-finder-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.path-finder-buttons button {
-  transition: all 0.15s ease;
-  cursor: pointer;
-}
-
-.path-finder-buttons button.active {
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
-  transform: translateY(-1px);
-}
-
-.path-result {
-  padding: 1rem;
-  border-radius: 6px;
-  margin-top: 0.5rem;
-}
-
-[data-md-color-scheme="slate"] .path-result {
-  background: #1a1e30;
-  border-left: 3px solid #00e5ff;
-}
-
-[data-md-color-scheme="default"] .path-result {
-  background: #e8e4f4;
-  border-left: 3px solid #651FFF;
-}
-
-.path-result h4 {
-  margin-top: 0;
 }
