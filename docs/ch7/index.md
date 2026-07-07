@@ -8,7 +8,7 @@
 
 <div class="grid cards" markdown>
 
--   :material/microsoft-windows: **新平台移植流程（Porting Guide）**
+-   :material-monitor: **新平台移植流程（Porting Guide）**
 
     ---
 
@@ -16,7 +16,7 @@
 
     [:material-arrow-right: 阅读](01_新平台移植流程.md)
 
--   :material/linux: **板级初始化（Board Init / PinMux / Clock）**
+-   :material-laptop: **板级初始化（Board Init / PinMux / Clock）**
 
     ---
 
@@ -24,7 +24,7 @@
 
     [:material-arrow-right: 阅读](02_板级初始化.md)
 
--   :material/file-tree: **设备树与驱动适配（Devicetree / Binding / Driver）**
+-   :material-file-document-multiple: **设备树与驱动适配（Devicetree / Binding / Driver）**
 
     ---
 
@@ -32,7 +32,7 @@
 
     [:material-arrow-right: 阅读](03_设备树与驱动适配.md)
 
--   :material/compare: **功能与资源裁剪（Kconfig / Memory Optimization）**
+-   :material-compare-horizontal: **功能与资源裁剪（Kconfig / Memory Optimization）**
 
     ---
 
@@ -40,7 +40,7 @@
 
     [:material-arrow-right: 阅读](04_功能与资源裁剪.md)
 
--   :material/folder-open: **新驱动开发流程（New Driver Development）**
+-   :material-folder-open: **新驱动开发流程（New Driver Development）**
 
     ---
 
@@ -48,7 +48,7 @@
 
     [:material-arrow-right: 阅读](05_新驱动开发流程.md)
 
--   :material/cog: **从传统 EC 平台迁移至 Chipsea Zephyr**
+-   :material-cog: **从传统 EC 平台迁移至 Chipsea Zephyr**
 
     ---
 
@@ -56,7 +56,7 @@
 
     [:material-arrow-right: 阅读](06_从传统EC平台迁移至ChipseaZephyr.md)
 
--   :material/console: **Zephyr 新板 Bringup 清单**
+-   :material-console: **Zephyr 新板 Bringup 清单**
 
     ---
 

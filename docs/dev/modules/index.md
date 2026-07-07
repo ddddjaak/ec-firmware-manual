@@ -8,7 +8,7 @@ EC 固件中各功能模块的设计与实现，涵盖 13 个应用子模块及 
 
 <div class="grid cards" markdown>
 
--   :material/chip: **系统基础设施**
+-   :material-developer-board: **系统基础设施**
 
     ---
 
@@ -16,7 +16,7 @@ EC 固件中各功能模块的设计与实现，涵盖 13 个应用子模块及 
 
     [:material-arrow-right: 阅读](01_系统基础设施.md)
 
--   :material/serial-port: **主机通信接口**
+-   :material-usb-port: **主机通信接口**
 
     ---
 
@@ -24,7 +24,7 @@ EC 固件中各功能模块的设计与实现，涵盖 13 个应用子模块及 
 
     [:material-arrow-right: 阅读](02_主机通信接口.md)
 
--   :material/power: **电源管理**
+-   :material-power: **电源管理**
 
     ---
 
@@ -32,7 +32,7 @@ EC 固件中各功能模块的设计与实现，涵盖 13 个应用子模块及 
 
     [:material-arrow-right: 阅读](03_电源管理.md)
 
--   :material/keyboard: **键盘与输入**
+-   :material-keyboard: **键盘与输入**
 
     ---
 
@@ -40,7 +40,7 @@ EC 固件中各功能模块的设计与实现，涵盖 13 个应用子模块及 
 
     [:material-arrow-right: 阅读](04_键盘与输入.md)
 
--   :material/battery-charging: **电池与充电**
+-   :material-battery-heart: **电池与充电**
 
     ---
 
@@ -48,7 +48,7 @@ EC 固件中各功能模块的设计与实现，涵盖 13 个应用子模块及 
 
     [:material-arrow-right: 阅读](05_电池与充电.md)
 
--   :material/thermometer: **热管理**
+-   :material-thermometer: **热管理**
 
     ---
 
@@ -56,7 +56,7 @@ EC 固件中各功能模块的设计与实现，涵盖 13 个应用子模块及 
 
     [:material-arrow-right: 阅读](06_热管理.md)
 
--   :material/usb: **USB与PD**
+-   :material-usb: **USB与PD**
 
     ---
 
@@ -64,7 +64,7 @@ EC 固件中各功能模块的设计与实现，涵盖 13 个应用子模块及 
 
     [:material-arrow-right: 阅读](07_USB与PD.md)
 
--   :material/shield-lock: **安全与固件更新**
+-   :material-shield-lock: **安全与固件更新**
 
     ---
 
@@ -72,7 +72,7 @@ EC 固件中各功能模块的设计与实现，涵盖 13 个应用子模块及 
 
     [:material-arrow-right: 阅读](08_安全与固件更新.md)
 
--   :material/led-on: **外设与存储**
+-   :material-led-on: **外设与存储**
 
     ---
 
@@ -80,7 +80,7 @@ EC 固件中各功能模块的设计与实现，涵盖 13 个应用子模块及 
 
     [:material-arrow-right: 阅读](09_外设与存储.md)
 
--   :material/gpio: **调试与GPIO**
+-   :material-gpio: **调试与GPIO**
 
     ---
 

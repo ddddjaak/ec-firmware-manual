@@ -56,7 +56,7 @@ hide:
 
     [:material-arrow-right: 立即开始](quickstart/index.md)
 
--   :material-bookshelf:{ .lg .middle } **开发指南**
+-   :material-book-open-variant:{ .lg .middle } **开发指南**
 
     ---
 
@@ -64,7 +64,7 @@ hide:
 
     [:material-arrow-right: 浏览指南](dev/index.md)
 
--   :material-swap-horizontal-circle:{ .lg .middle } **移植与定制**
+-   :material-cable-data:{ .lg .middle } **移植与定制**
 
     ---
 
@@ -72,7 +72,7 @@ hide:
 
     [:material-arrow-right: 查看详情](ch7/index.md)
 
--   :material-book-open-page-variant:{ .lg .middle } **参考手册**
+-   :material-bookmark-multiple:{ .lg .middle } **参考手册**
 
     ---
 
@@ -88,7 +88,7 @@ hide:
 
 <div class="grid cards" markdown>
 
--   :material-layers-triple:{ .lg .middle } **架构与配置**
+-   :material-layers:{ .lg .middle } **架构与配置**
 
     ---
 
@@ -96,7 +96,7 @@ hide:
 
     [:material-arrow-right: 阅读](dev/architecture/index.md)
 
--   :material-memory:{ .lg .middle } **功能模块**
+-   :material-developer-board:{ .lg .middle } **功能模块**
 
     ---
 
@@ -104,7 +104,7 @@ hide:
 
     [:material-arrow-right: 阅读](dev/modules/index.md)
 
--   :material-code-json:{ .lg .middle } **应用开发**
+-   :material-code-braces:{ .lg .middle } **应用开发**
 
     ---
 
@@ -112,7 +112,7 @@ hide:
 
     [:material-arrow-right: 阅读](dev/appdev/index.md)
 
--   :material-bug-check:{ .lg .middle } **调试与验证**
+-   :material-bug-outline:{ .lg .middle } **调试与验证**
 
     ---
 
@@ -120,7 +120,7 @@ hide:
 
     [:material-arrow-right: 阅读](dev/debug/index.md)
 
--   :material-cog-sync:{ .lg .middle } **移植与定制**
+-   :material-puzzle:{ .lg .middle } **移植与定制**
 
     ---
 
@@ -128,7 +128,7 @@ hide:
 
     [:material-arrow-right: 阅读](ch7/index.md)
 
--   :material-star-shooting:{ .lg .middle } **最佳实践**
+-   :material-shield-star:{ .lg .middle } **最佳实践**
 
     ---
 
@@ -136,7 +136,7 @@ hide:
 
     [:material-arrow-right: 阅读](ch8/index.md)
 
--   :material-console:{ .lg .middle } **命令速查**
+-   :material-console-line:{ .lg .middle } **命令速查**
 
     ---
 
@@ -144,7 +144,7 @@ hide:
 
     [:material-arrow-right: 阅读](ref/01_命令速查.md)
 
--   :material-book-alphabet:{ .lg .middle } **术语表**
+-   :material-sort-alphabetical-variant:{ .lg .middle } **术语表**
 
     ---
 

@@ -9,7 +9,7 @@
 
 <div class="grid cards" markdown>
 
--   :material/microsoft-windows: **代码规范与提交流程（Coding Style / Commit / Doc）**
+-   :material-monitor: **代码规范与提交流程（Coding Style / Commit / Doc）**
 
     ---
 
@@ -17,7 +17,7 @@
 
     [:material-arrow-right: 阅读](01_代码规范与提交流程.md)
 
--   :material/linux: **功耗优化策略（System / Peripheral / Application）**
+-   :material-laptop: **功耗优化策略（System / Peripheral / Application）**
 
     ---
 
@@ -25,7 +25,7 @@
 
     [:material-arrow-right: 阅读](02_功耗优化策略.md)
 
--   :material/file-tree: **安全加固与运行时防护（Security Hardening）**
+-   :material-file-document-multiple: **安全加固与运行时防护（Security Hardening）**
 
     ---
 
@@ -33,7 +33,7 @@
 
     [:material-arrow-right: 阅读](03_安全加固与运行时防护.md)
 
--   :material/compare: **与客户应用的集成与协作（Integration & Co-Development）**
+-   :material-compare-horizontal: **与客户应用的集成与协作（Integration & Co-Development）**
 
     ---
 

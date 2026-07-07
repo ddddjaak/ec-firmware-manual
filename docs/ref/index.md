@@ -8,7 +8,7 @@
 
 <div class="grid cards" markdown>
 
--   :material/console: **命令速查**
+-   :material-console: **命令速查**
 
     ---
 
@@ -16,7 +16,7 @@
 
     [:material-arrow-right: 阅读](01_命令速查.md)
 
--   :material/format-list-bulleted: **术语表**
+-   :material-format-list-bulleted: **术语表**
 
     ---
 
@@ -24,7 +24,7 @@
 
     [:material-arrow-right: 阅读](02_术语表.md)
 
--   :material/chip: **硬件接口参考**
+-   :material-developer-board: **硬件接口参考**
 
     ---
 
@@ -32,7 +32,7 @@
 
     [:material-arrow-right: 阅读](03_硬件接口参考.md)
 
--   :material/link: **开源资源链接**
+-   :material-link: **开源资源链接**
 
     ---
 

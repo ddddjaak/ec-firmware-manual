@@ -8,7 +8,7 @@
 
 <div class="grid cards" markdown>
 
--   :material/microsoft-windows: **环境搭建**
+-   :material-monitor: **环境搭建**
 
     ---
 
@@ -16,7 +16,7 @@
 
     [:material-arrow-right: 阅读](01_环境搭建.md)
 
--   :material/source-branch: **获取源码与编译**
+-   :material-source-branch: **获取源码与编译**
 
     ---
 
@@ -24,7 +24,7 @@
 
     [:material-arrow-right: 阅读](02_获取源码与编译.md)
 
--   :material/flash: **烧录与验证**
+-   :material-flash: **烧录与验证**
 
     ---
 
