@@ -22,8 +22,6 @@ theme:
       toggle:
         icon: material/weather-night
         name: 暗色模式
-  font:
-    code: Fira Code
   features:
     - navigation.instant
     - navigation.tracking

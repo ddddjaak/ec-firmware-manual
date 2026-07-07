@@ -34,11 +34,6 @@
   --md-accent-fg-color:              #00BCD4;
 }
 
-/* ---- 字体: 幼圆 (Windows) + 系统兜底 ---- */
-:root {
-  --md-text-font: "YouYuan", "幼圆", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
-}
-
 /* ---- 首页 Hero ---- */
 .cyber-hero {
   text-align: center;
