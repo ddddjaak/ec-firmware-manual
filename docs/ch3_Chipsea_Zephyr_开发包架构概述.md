@@ -1,6 +1,5 @@
 # 开发包架构概述
 
-# 开发包架构概述
 
 Chipsea Zephyr 开发包是基于 Zephyr RTOS 3.7.0（LTS）和 CSCE250X 系列芯片的 EC 固件框架，核心目标：
 
