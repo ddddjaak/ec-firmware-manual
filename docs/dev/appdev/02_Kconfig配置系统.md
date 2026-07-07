@@ -26,7 +26,7 @@ config UART_CONSOLE
 
 #### 驱动、设备树与 Kconfig 的关系
 
-![图 3-1](../media/image4.png){width="5.0569444444444445in" height="2.6847222222222222in"}
+![图 3-1](../../media/image4.png){width="5.0569444444444445in" height="2.6847222222222222in"}
 
 - Kconfig：决定驱动是否被编译进系统（软件层面开关）；
 - 设备树（DTS）：决定驱动初始化时的硬件参数（地址、引脚、速率等）；
@@ -101,9 +101,9 @@ west build -t guiconfig
 
 这会启动类似 Linux 内核的菜单界面，可手动启用或关闭配置项，退出时修改写回 `.config`。
 
-![图 3-2](../media/image5.png){width="3.3541666666666665in" height="4.004166666666666in"}
+![图 3-2](../../media/image5.png){width="3.3541666666666665in" height="4.004166666666666in"}
 
-![图 3-3](../media/image6.png){width="6.486111111111111in" height="1.9319444444444445in"}
+![图 3-3](../../media/image6.png){width="6.486111111111111in" height="1.9319444444444445in"}
 
 #### 自定义 Kconfig
 

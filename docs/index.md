@@ -48,81 +48,77 @@ hide:
 
 <div class="grid cards" markdown>
 
--   :material-help-circle: **认识 EC** · 引言
+-   :material-rocket-launch: **快速上手**
 
     ---
 
-    理解 EC 在笔记本与嵌入式系统中的角色，掌握 OpenEC + Zephyr RTOS 的架构优势与开发理念
+    30 分钟完成环境搭建、编译并烧录第一个固件
 
-    [:material-arrow-right: 开始阅读](ch1_引言.md)
+    [:material-arrow-right: 开始](quickstart/index.md)
 
--   :material-code-braces: **开始搭建** · 开发环境
-
-    ---
-
-    Linux / Windows 双平台一站式开发环境搭建，从工具链配置到首次固件编译验证
-
-    [:material-arrow-right: 开始搭建](ch2/index.md)
-
--   :material-view-grid: **功能模块** · 固件说明
+-   :material-code-braces: **开发指南**
 
     ---
 
-    电源管理、键盘扫描、电池充电、热管理、USB-C/PD 等 10 个子模块详解
+    架构设计、功能模块、外设驱动、调试验证 — 日常开发核心参考
 
-    [:material-arrow-right: 查看模块](ch4/index.md)
+    [:material-arrow-right: 进入](dev/index.md)
 
--   :material-flash: **固件开发** · 应用指南
+-   :material-swap-horizontal: **移植与定制**
 
     ---
 
-    任务调度模型、外设驱动框架、主机通信协议与 Zephyr 系统服务实战
+    新平台移植、驱动开发、从传统 EC 迁移
 
-    [:material-arrow-right: 开始开发](ch5/index.md)
+    [:material-arrow-right: 阅读](ch7/index.md)
+
+-   :material-book-open-variant: **参考手册**
+
+    ---
+
+    命令速查、术语表、硬件接口、开源资源
+
+    [:material-arrow-right: 查阅](ref/index.md)
 
 </div>
 
 ---
 
-## :material-format-list-bulleted: 全部章节
+## :material-format-list-bulleted: 全部内容
 
 <div class="grid cards" markdown>
 
--   1. :material-help-circle: **引言** — EC 概念与 OpenEC + Zephyr 优势
+-   :material-rocket-launch: **快速上手** — 环境搭建、编译、烧录
 
-    [:material-arrow-right: 阅读](ch1_引言.md)
+    [:material-arrow-right: 阅读](quickstart/index.md)
 
--   2. :material-code-braces: **开发环境准备** — Linux / Windows 双平台搭建
+-   :material-layers: **架构与配置** — 分层模型、目录结构、DTS/Kconfig
 
-    [:material-arrow-right: 阅读](ch2/index.md)
+    [:material-arrow-right: 阅读](dev/architecture/index.md)
 
--   3. :material-package-variant: **开发包架构概述** — 目录与 Kconfig 解析
+-   :material-chip: **功能模块** — 10 个子模块详解
 
-    [:material-arrow-right: 阅读](ch3/index.md)
+    [:material-arrow-right: 阅读](dev/modules/index.md)
 
--   4. :material-view-grid: **固件功能模块** — 10 个子模块（电源、键盘、电池、热管理、USB/PD 等）
+-   :material-code-tags: **应用开发** — 新增模块、外设驱动、任务模型
 
-    [:material-arrow-right: 查看](ch4/index.md)
+    [:material-arrow-right: 阅读](dev/appdev/index.md)
 
--   5. :material-flash: **应用开发指南** — 快速上手与最佳实践
+-   :material-bug: **调试与验证** — 日志、测试、崩溃分析、FAQ
 
-    [:material-arrow-right: 阅读](ch5/index.md)
+    [:material-arrow-right: 阅读](dev/debug/index.md)
 
--   6. :material-bug: **调试与验证** — 日志、Shell、仿真、测试框架
-
-    [:material-arrow-right: 阅读](ch6/index.md)
-
--   7. :material-swap-horizontal: **移植与定制** — BSP 创建、设备树适配、新板清单
+-   :material-swap-horizontal: **移植与定制** — 新平台移植、驱动开发、迁移
 
     [:material-arrow-right: 阅读](ch7/index.md)
 
--   8. :material-security: **最佳实践与建议** — 规范、优化、安全
+-   :material-security: **最佳实践** — 规范、功耗、安全
 
     [:material-arrow-right: 阅读](ch8/index.md)
 
--   9. :material-file-document: **附录** — 命令速查、术语、资源
+-   :material-book-open-variant: **参考手册** — 命令速查、术语、资源
 
-    [:material-arrow-right: 阅读](ch9/index.md)
+    [:material-arrow-right: 阅读](ref/index.md)
 
 </div>
 
@@ -142,7 +138,7 @@ hide:
 
 <div class="page-footer" markdown>
 
-**V1.0** · 9 个章节 · 基于 Zephyr 3.7.0 LTS
+**V1.0** · 基于 Zephyr 3.7.0 LTS
 
 有问题？请通过内部渠道反馈
 
