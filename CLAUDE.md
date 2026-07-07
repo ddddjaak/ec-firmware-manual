@@ -59,9 +59,15 @@ git push origin main
 ```
 docs/                              ← MkDocs 源文件
   index.md                         ← 首页（魔幻科技感 Hero + grid cards）
-  ch1_引言.md                       ← 第1章（单文件）
-  ch2/ … ch9/                      ← 第2-9章（每章 index.md + 子章节 01_*.md … Nn_*.md）
-  ch4/                             ← 第4章（10个子章节）
+  quickstart/                      ← 快速上手（环境搭建、编译、烧录）
+  dev/                             ← 开发指南
+    architecture/                  ← 架构与配置（5 个子章节）
+    modules/                       ← 功能模块（10 个子章节）
+    appdev/                        ← 应用开发（8 个子章节）
+    debug/                         ← 调试与验证（6 个子章节）
+  ch7/                             ← 移植与定制（7 个子章节）
+  ch8/                             ← 最佳实践（4 个子章节）
+  ref/                             ← 参考手册（命令速查、术语、资源）
   media/                           ← 文档图片
   stylesheets/extra.css            ← 赛博暗色主题 + 首页特效
   javascripts/extra.js             ← 自定义 JS
