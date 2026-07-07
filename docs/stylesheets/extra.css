@@ -1,0 +1,360 @@
+/* ============================================================
+   赛博暗色主题 — Cyber Dark Theme for AI Training Wiki
+   配色: deep purple (主导航) + cyan (高亮/链接)
+   ============================================================ */
+
+/* ---- CSS 变量覆写 (暗色模式) ---- */
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color:             #0d0f17;
+  --md-default-bg-color--light:      #141725;
+  --md-default-bg-color--lighter:    #1a1e30;
+  --md-default-bg-color--lightest:   #21253b;
+  --md-code-bg-color:                #0a0c13;
+  --md-code-fg-color:                #b4c6e7;
+  --md-typeset-color:                #c8d0e0;
+  --md-typeset-a-color:              #00e5ff;
+  --md-accent-fg-color:              #00e5ff;
+  --md-primary-fg-color:             #673AB7;
+  --md-typeset-table-color--light:   #1e2240;
+  --md-typeset-table-color:          #2a2e4a;
+  --md-default-fg-color--light:      #8890b0;
+  --md-footer-bg-color:              #0a0c14;
+  --md-footer-bg-color--dark:        #060810;
+  --md-admonition-bg-color:          #141725;
+}
+
+/* ---- 亮色模式也保持紫色基调 ---- */
+[data-md-color-scheme="default"] {
+  --md-default-bg-color:             #f8f7fc;
+  --md-default-bg-color--light:      #f0edf8;
+  --md-default-bg-color--lighter:   #e8e4f4;
+  --md-code-bg-color:                #0d0f17;
+  --md-code-fg-color:                #b4c6e7;
+  --md-typeset-a-color:              #651FFF;
+  --md-accent-fg-color:              #00BCD4;
+}
+
+/* ---- 字体: 幼圆 (Windows) + 系统兜底 ---- */
+:root {
+  --md-text-font: "YouYuan", "幼圆", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
+
+/* ---- 首页 Hero ---- */
+.cyber-hero {
+  text-align: center;
+  padding: 3.5rem 1rem 2.5rem;
+}
+
+.cyber-hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+[data-md-color-scheme="slate"] .cyber-hero h1 {
+  background: linear-gradient(135deg, #b388ff, #00e5ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-md-color-scheme="default"] .cyber-hero h1 {
+  background: linear-gradient(135deg, #651FFF, #00BCD4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-tagline {
+  font-size: 1.15rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+
+[data-md-color-scheme="slate"] .hero-tagline {
+  color: #80deea;
+}
+
+[data-md-color-scheme="default"] .hero-tagline {
+  color: #651FFF;
+}
+
+.cyber-hero .md-button {
+  margin: 0.3rem;
+}
+
+/* ---- 首页页脚 ---- */
+.page-footer {
+  text-align: center;
+  padding: 2rem 0 1rem;
+  font-size: 0.85rem;
+}
+
+[data-md-color-scheme="slate"] .page-footer {
+  color: #6a7090;
+  border-top: 1px solid rgba(103, 58, 183, 0.15);
+}
+
+[data-md-color-scheme="default"] .page-footer {
+  color: #8888a0;
+  border-top: 1px solid rgba(103, 58, 183, 0.1);
+}
+
+.page-footer a {
+  font-weight: 500;
+}
+
+/* ---- 首页统计卡片图标 ---- */
+.stat-icon {
+  font-size: 1.3rem;
+  vertical-align: middle;
+}
+
+/* ---- 代码块: 终端暗色 + 细边框辉光 ---- */
+.md-typeset pre > code {
+  max-height: 500px;
+  border-radius: 6px;
+}
+
+[data-md-color-scheme="slate"] .md-typeset pre {
+  border: 1px solid rgba(103, 58, 183, 0.25);
+  box-shadow: 0 0 12px rgba(103, 58, 183, 0.08);
+}
+
+[data-md-color-scheme="default"] .md-typeset pre {
+  border: 1px solid rgba(103, 58, 183, 0.15);
+}
+
+.md-typeset code {
+  font-size: 0.9em;
+  border-radius: 3px;
+}
+
+[data-md-color-scheme="slate"] .md-typeset code:not(pre code) {
+  background-color: #1e2240;
+  color: #80deea;
+  padding: 2px 5px;
+}
+
+[data-md-color-scheme="default"] .md-typeset code:not(pre code) {
+  background-color: #ede7f6;
+  color: #651FFF;
+  padding: 2px 5px;
+}
+
+/* ---- 链接辉光效果 ---- */
+[data-md-color-scheme="slate"] .md-typeset a:not(.md-button):hover {
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
+}
+
+.md-typeset a:not(.md-button):hover {
+  transition: text-shadow 0.2s ease;
+}
+
+/* ---- 导航: 激活项发光 ---- */
+[data-md-color-scheme="slate"] .md-nav__item--active > .md-nav__link {
+  text-shadow: 0 0 4px rgba(0, 229, 255, 0.3);
+}
+
+.md-nav__link:hover {
+  transition: color 0.15s ease;
+}
+
+/* ---- 导航栏底部渐变线 ---- */
+[data-md-color-scheme="slate"] .md-header {
+  border-bottom: 1px solid rgba(0, 229, 255, 0.12);
+}
+
+/* ---- 表格: 暗色斑马纹 ---- */
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) {
+  border: 1px solid #2a2e4a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background-color: #673AB7;
+  color: #fff;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) tr:nth-child(even) {
+  background-color: #141725;
+}
+
+/* ---- 引用块 ---- */
+[data-md-color-scheme="slate"] .md-typeset blockquote {
+  border-left: 3px solid #00e5ff;
+  background: rgba(0, 229, 255, 0.04);
+  border-radius: 0 4px 4px 0;
+}
+
+[data-md-color-scheme="default"] .md-typeset blockquote {
+  border-left: 3px solid #651FFF;
+  background: rgba(103, 58, 183, 0.04);
+  border-radius: 0 4px 4px 0;
+}
+
+/* ---- 分隔线 ---- */
+[data-md-color-scheme="slate"] .md-typeset hr {
+  border-bottom: 1px solid rgba(103, 58, 183, 0.2);
+}
+
+/* ---- admonition 自定义 ---- */
+[data-md-color-scheme="slate"] .md-typeset .admonition,
+[data-md-color-scheme="slate"] .md-typeset details {
+  border: 1px solid rgba(103, 58, 183, 0.2);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .admonition.tip,
+[data-md-color-scheme="slate"] .md-typeset details.tip {
+  border-color: rgba(0, 229, 255, 0.25);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .admonition.warning,
+[data-md-color-scheme="slate"] .md-typeset details.warning {
+  border-color: rgba(255, 171, 0, 0.25);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .admonition.danger,
+[data-md-color-scheme="slate"] .md-typeset details.danger {
+  border-color: rgba(255, 82, 82, 0.25);
+}
+
+/* ---- 滚动条 (暗色模式) ---- */
+[data-md-color-scheme="slate"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-md-color-scheme="slate"] ::-webkit-scrollbar-track {
+  background: #0d0f17;
+}
+
+[data-md-color-scheme="slate"] ::-webkit-scrollbar-thumb {
+  background: #3a2e60;
+  border-radius: 4px;
+}
+
+[data-md-color-scheme="slate"] ::-webkit-scrollbar-thumb:hover {
+  background: #673AB7;
+}
+
+/* ---- 搜索框 ---- */
+[data-md-color-scheme="slate"] .md-search__input {
+  background-color: #1a1e30;
+  border-radius: 4px;
+  border: 1px solid rgba(103, 58, 183, 0.3);
+}
+
+[data-md-color-scheme="slate"] .md-search__input:focus {
+  border-color: rgba(0, 229, 255, 0.5);
+}
+
+/* ---- 回到顶部按钮 ---- */
+[data-md-color-scheme="slate"] .md-top {
+  background-color: #673AB7;
+  box-shadow: 0 2px 12px rgba(103, 58, 183, 0.3);
+}
+
+/* ---- 选中文字颜色 ---- */
+[data-md-color-scheme="slate"] ::selection {
+  background-color: rgba(0, 229, 255, 0.25);
+  color: #fff;
+}
+
+[data-md-color-scheme="default"] ::selection {
+  background-color: rgba(103, 58, 183, 0.2);
+  color: #1a0033;
+}
+
+/* ---- header 标题高度 ---- */
+.md-header__title {
+  font-size: 1.15rem;
+}
+
+/* ---- 代码块复制按钮 ---- */
+[data-md-color-scheme="slate"] .md-clipboard {
+  color: rgba(0, 229, 255, 0.4);
+}
+
+[data-md-color-scheme="slate"] .md-clipboard:hover {
+  color: #00e5ff;
+}
+
+/* ---- 卡片式内容区 (为未来 grid cards 准备) ---- */
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > :is(ul, ol) > li {
+  border: 1px solid rgba(103, 58, 183, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > :is(ul, ol) > li:hover {
+  border-color: rgba(0, 229, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.06);
+}
+
+/* ---- TOC 跟随高亮 ---- */
+[data-md-color-scheme="slate"] .md-nav__link--passed {
+  color: #8890b0;
+}
+
+[data-md-color-scheme="slate"] .md-nav__link--active {
+  color: #00e5ff;
+}
+
+/* ---- Alpine.js 学习路径推荐器 ---- */
+.path-finder {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+}
+
+[data-md-color-scheme="slate"] .path-finder {
+  background: #141725;
+  border: 1px solid rgba(103, 58, 183, 0.2);
+}
+
+[data-md-color-scheme="default"] .path-finder {
+  background: #f0edf8;
+  border: 1px solid rgba(103, 58, 183, 0.15);
+}
+
+.path-finder-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.path-finder-buttons button {
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.path-finder-buttons button.active {
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.path-result {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+}
+
+[data-md-color-scheme="slate"] .path-result {
+  background: #1a1e30;
+  border-left: 3px solid #00e5ff;
+}
+
+[data-md-color-scheme="default"] .path-result {
+  background: #e8e4f4;
+  border-left: 3px solid #651FFF;
+}
+
+.path-result h4 {
+  margin-top: 0;
+}

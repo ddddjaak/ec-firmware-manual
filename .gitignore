@@ -1,0 +1,26 @@
+# Doxygen output
+doxygen_output/
+*.html
+
+# MkDocs build
+site/
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large binary source code (not needed for docs site)
+EC-Zephyr/
+IT557x_ADL_N_MRD-ec-v0.21-220914/
+
+# Sensitive
+.claude/
+.sisyphus/

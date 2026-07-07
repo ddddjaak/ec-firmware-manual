@@ -1,0 +1,79 @@
+site_name: "芯海 EC 固件开发手册"
+site_description: "基于 Zephyr 3.7.0 LTS 的嵌入式控制器固件开发指南"
+repo_name: ddddjaak/ec-firmware-manual
+repo_url: https://github.com/ddddjaak/ec-firmware-manual
+
+theme:
+  name: material
+  language: zh
+  icon:
+    logo: material/chip
+    repo: fontawesome/brands/github
+  palette:
+    - scheme: slate
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/weather-sunny
+        name: 亮色模式
+    - scheme: default
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/weather-night
+        name: 暗色模式
+  font:
+    code: Fira Code
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - tables
+  - footnotes
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  generator: false
+
+copyright: "© 2026 芯海科技 · Powered by MkDocs Material"
+
+nav:
+  - 首页: index.md
+  - 1. 引言: ch1_引言.md
+  - 2. 开发环境准备: ch2_开发环境准备.md
+  - 3. 开发包架构概述: ch3_Chipsea_Zephyr_开发包架构概述.md
+  - 4. 固件功能模块说明: ch4_固件功能模块说明.md
+  - 5. 应用开发指南: ch5_应用开发指南.md
+  - 6. 调试与验证: ch6_调试与验证.md
+  - 7. 移植与定制: ch7_移植与定制.md
+  - 8. 最佳实践与建议: ch8_最佳实践与建议.md
+  - 9. 附录: ch9_附录.md
