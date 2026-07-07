@@ -6,7 +6,7 @@ hide:
 
 <div class="cyber-hero" markdown>
 
-# 🔧 芯海 EC 固件开发手册
+# 🔧 Zephyr EC Manual
 
 <p class="hero-tagline">基于 Zephyr 3.7.0 LTS 的嵌入式控制器固件开发指南</p>
 

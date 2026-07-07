@@ -1,5 +1,5 @@
-site_name: "芯海 EC 固件开发手册"
-site_description: "基于 Zephyr 3.7.0 LTS 的嵌入式控制器固件开发指南"
+site_name: "Zephyr EC Manual"
+site_description: "Zephyr EC Firmware Development Manual"
 repo_name: ddddjaak/ec-firmware-manual
 repo_url: https://github.com/ddddjaak/ec-firmware-manual
 
