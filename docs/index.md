@@ -62,7 +62,7 @@ hide:
 
     Linux / Windows 双平台一站式开发环境搭建，从工具链配置到首次固件编译验证
 
-    [:material-arrow-right: 开始搭建](ch2_开发环境准备.md)
+    [:material-arrow-right: 开始搭建](ch2/index.md)
 
 -   :material-view-grid: **功能模块** · 固件说明
 
@@ -78,7 +78,7 @@ hide:
 
     任务调度模型、外设驱动框架、主机通信协议与 Zephyr 系统服务实战
 
-    [:material-arrow-right: 开始开发](ch5_应用开发指南.md)
+    [:material-arrow-right: 开始开发](ch5/index.md)
 
 </div>
 
@@ -94,11 +94,11 @@ hide:
 
 -   2. :material-code-braces: **开发环境准备** — Linux / Windows 双平台搭建
 
-    [:material-arrow-right: 阅读](ch2_开发环境准备.md)
+    [:material-arrow-right: 阅读](ch2/index.md)
 
 -   3. :material-package-variant: **开发包架构概述** — 目录与 Kconfig 解析
 
-    [:material-arrow-right: 阅读](ch3_Chipsea_Zephyr_开发包架构概述.md)
+    [:material-arrow-right: 阅读](ch3/index.md)
 
 -   4. :material-view-grid: **固件功能模块** — 10 个子模块（电源、键盘、电池、热管理、USB/PD 等）
 
@@ -106,23 +106,23 @@ hide:
 
 -   5. :material-flash: **应用开发指南** — 快速上手与最佳实践
 
-    [:material-arrow-right: 阅读](ch5_应用开发指南.md)
+    [:material-arrow-right: 阅读](ch5/index.md)
 
 -   6. :material-bug: **调试与验证** — 日志、Shell、仿真、测试框架
 
-    [:material-arrow-right: 阅读](ch6_调试与验证.md)
+    [:material-arrow-right: 阅读](ch6/index.md)
 
 -   7. :material-swap-horizontal: **移植与定制** — BSP 创建、设备树适配、新板清单
 
-    [:material-arrow-right: 阅读](ch7_移植与定制.md)
+    [:material-arrow-right: 阅读](ch7/index.md)
 
 -   8. :material-security: **最佳实践与建议** — 规范、优化、安全
 
-    [:material-arrow-right: 阅读](ch8_最佳实践与建议.md)
+    [:material-arrow-right: 阅读](ch8/index.md)
 
 -   9. :material-file-document: **附录** — 命令速查、术语、资源
 
-    [:material-arrow-right: 阅读](ch9_附录.md)
+    [:material-arrow-right: 阅读](ch9/index.md)
 
 </div>
 
