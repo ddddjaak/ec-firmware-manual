@@ -1,0 +1,232 @@
+﻿<div class="chapter-header"><span class="chapter-num">04-07</span><span class="separator">/</span><a href="../index.md">首页</a><span class="separator">›</span><a href="index.md">固件功能模块</a><span class="separator">›</span><span>USB与PD</span></div>
+
+## USB 功能模块 (USB Function)
+
+`drivers/usb/` 实现 EC 作为 USB 复合设备与主机交互，主要用于系统固件更新（DFU 模式）和调试接口。
+
+### USB 设备模式
+
+EC 支持两种 USB 角色：
+
+| 模式 | 用途 | 场景 |
+|------|------|------|
+| USB Device (HID) | EC 键盘/鼠标事件上报 | 传统笔记本键盘 → 主机 |
+| USB Device (DFU) | Device Firmware Upgrade | EC 固件烧录与恢复 |
+
+### HID 报文格式
+
+EC 键盘以标准 USB HID Boot Protocol 格式上报按键：
+
+- 报文长度：8 字节（1 字节修饰键 + 1 字节保留 + 6 字节按键码）
+- 修饰键字节：BIT0=左Ctrl、BIT1=左Shift、BIT2=左Alt、BIT3=左GUI
+- 按键码：USB HID Usage ID 标准（0x04=a、0x1D=z 等）
+- 多键同时按下：最多 6 键同时上报（6KRO），超过 6 键时第 6 字节填充 0x01（ErrorRollOver）
+
+### Endpoint 配置
+
+| Endpoint | 方向 | 类型 | 用途 |
+|----------|------|------|------|
+| EP0 | 双向 | Control | 设备枚举、描述符请求、DFU 命令 |
+| EP1 IN | IN | Interrupt | HID 键盘报文上报（bInterval=1ms） |
+
+### 配置
+
+通过 Zephyr USB 设备栈配置，关键 Kconfig 选项：
+- `CONFIG_USB_DEVICE_STACK`：USB 设备模式总开关
+- `CONFIG_USB_HID_DEVICE`：HID 设备类驱动
+- `CONFIG_USB_DFU_CLASS`：DFU 固件更新类
+
+
+---
+
+## PD/Type-C 管理 (PD Management)
+
+`app/pd_management/` 负责 USB Power Delivery 协议管理与 Type-C 端口状态监控，是供电策略的核心决策模块。
+
+### PD 状态机
+
+PD 管理维护 4 个状态（`enum pd_state`）：
+
+| 状态 | 含义 |
+|------|------|
+| `PD0_LOAD_PDFW` | 加载 PD 固件（第一阶段） |
+| `PD1_LOAD_PDFW` | 加载 PD 固件（第二阶段） |
+| `PD_INIT` | PD 协议栈初始化 |
+| `PD_WAIT_EVENT_PROCESS` | 等待事件并处理（正常运行状态） |
+
+上电后 PD 模块依次完成两级固件加载和协议栈初始化，然后进入事件驱动的主循环。
+
+### 供电能力协商
+
+当 Type-C 适配器插入后，EC 通过 PD 协议与适配器协商供电能力（PDO — Power Delivery Object），协商结果通过以下 OEM 可定制函数对外提供：
+
+| 函数 | 返回值 | 用途 |
+|------|--------|------|
+| `get_opened_adapter_watt()` | 适配器功率（W） | 确定系统总供电能力，决定是否可全性能运行 |
+| `get_input_current()` | 输入电流限制（mA） | 充电器输入电流上限，防止适配器过载 |
+| `clear_dead_battery_flag()` | void | 清除死电池标志，恢复电池正常充放电 |
+
+OEM 需根据实际 PD 协商结果实现这三个函数。典型返回值示例：65W 适配器 → `get_opened_adapter_watt()` 返回 `65`，`get_input_current()` 返回 `3250`（3.25A）。
+
+### 线程模型
+
+`pd_thread` 以配置的周期运行，每个周期执行两步：
+
+1. `pd_sys_event()` — 通过 `k_event_wait(&sEvent.event_pd, ...)` 检查系统事件：
+   - `EC_EVENT_SYSTEM_S5_S0`：记录 PD 事件日志（S5→S0）
+   - `EC_EVENT_SYSTEM_S0_S5`：记录 PD 事件日志（S0→S5）
+   - 其他事件（LID、Display、ITS 模式切换等）当前为预留桩，OEM 可按需扩展
+2. 100ms 子周期 — 预留的周期性任务槽位，可在此执行 PD 状态轮询或 Type-C 插拔检测
+
+### 与电池充电模块的协作
+
+PD 协商结果直接影响充电策略：
+- `get_input_current()` 返回值传递给充电器驱动，设置 `CHARGER_INIT_DATA` 中的输入电流限制
+- 低功率适配器（如 15W/27W）→ 限制充电电流 + 降低系统性能等级
+- 高功率适配器（如 65W/100W）→ 全速充电 + 全性能运行
+- 死电池场景：PD 模块检测到电池电压过低 → 调用 `clear_dead_battery_flag()` → 电池模块进入唤醒充电（WC）状态
+
+### 配置
+
+通过 `CONFIG_PD_LOG_LEVEL` 控制 PD 模块的日志输出级别，调试阶段建议设为 `LOG_LEVEL_DBG`。
+
+
+---
+
+## USB-C 与电力传输（PD）
+
+USB-C 是 USB-IF 制定的连接器与线缆标准，电力传输（Power Delivery, PD）是基于该接口的电力协商协议。在笔记本 EC 中，USB-C/PD 子系统是最复杂的模块之一，涉及多个硬件组件和多层状态机。
+
+### PD 协议栈架构
+
+EC 的 PD 协议栈采用分层架构，由四个核心组件协作：
+
+| 组件 | 全称 | 职责 |
+|------|------|------|
+| **TCPC** | Type-C Port Controller | Type-C 端口控制器——管理 CC 引脚检测、插拔事件、VCONN 控制 |
+| **TCPM** | Type-C Port Manager | Type-C 端口管理器——运行在 EC 上的 PD 状态机，协调 TCPC/PPC/SSMUX |
+| **PPC** | Power Path Controller | 电源路径控制器——管理 VBUS 电源开关、过压/过流保护 |
+| **SSMUX** | SuperSpeed Mux | 高速信号复用器——切换 USB3/DP Alt Mode 的差分信号路由 |
+
+### 状态机
+
+PD 协议栈维护多个并发状态机：
+
+- **Type-C 状态机**：检测端口角色（Source/Sink/DRP）、电缆方向、音频模式等
+- **PD 状态机**：协商电力合同（电压/电流）、处理 Source/Sink Capabilities、Accept/Reject 等
+- **Source/Sink 状态机**：分别管理供电端和受电端的行为逻辑
+
+### SVDM 与 VDM
+
+- **VDM (Vendor Defined Messages)**：PD 规范允许厂商自定义消息，用于非标准功能
+- **SVDM (Structured VDM)**：USB-IF 定义的结构化 VDM，用于 Discover Identity、Discover SVIDs、Discover Modes、Enter/Exit Mode 等标准化流程
+
+### 电缆类型
+
+| 类型 | 特征 | 影响 |
+|------|------|------|
+| **E-Mark** | 电缆内含电子标记芯片 | 支持 5A 电流、USB4 等高级功能 |
+| **非 E-Mark** | 无标记芯片 | 最大支持 3A 电流 |
+| **VCONN** | 为 E-Mark 供电的 5V 电源 | EC 需要在 CC 引脚上提供 |
+
+### TCPC 通信接口
+
+EC 通过 I²C 总线与 TCPC 芯片通信，使用标准寄存器映射：
+
+| 寄存器 | 地址 | 功能 |
+|--------|------|------|
+| `TCPC_REG_VENDOR_ID` | 0x00 | 厂商 ID |
+| `TCPC_REG_ALERT` | 0x10 | 告警状态（插拔、PD 消息等） |
+| `TCPC_REG_CC_STATUS` | 0x1D | CC 引脚状态 |
+| `TCPC_REG_POWER_CTRL` | 0x1C | 电源控制（VCONN、VBUS 等） |
+
+### 调试命令
+
+EC Shell 提供以下 PD 调试命令：
+
+```
+uart:~$ pd <port> state      # 查看当前 PD 状态
+uart:~$ pd <port> charger    # 查看充电器信息
+uart:~$ pd <port> version    # 查看 PD 协议栈版本
+uart:~$ pd <port> dump       # 寄存器转储
+```
+
+### 详细参考资料
+
+- [Type-C 和 EC 端口控制器（TCPC）](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/new_driver_tcpc.md) — TCPC 驱动开发指南
+- [USB PD 调试](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/usb-pd-debugging.md) — PD 故障排查方法
+- [PD VDM](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/pd_vdm.md) — VDM/SVDM 消息详解
+
+## 固件写保护机制
+
+EC 固件的写保护是安全体系的重要组成部分，防止未授权的固件修改。写保护分为硬件写保护和软件写保护两层。
+
+### RO 与 RW 固件分区
+
+EC 固件分为两个区域：
+
+| 区域 | 说明 |
+|------|------|
+| **RO (Read-Only)** | 只读固件——包含启动代码和验证逻辑，工厂锁定后永不更改 |
+| **RW (Read-Write)** | 读写固件——包含主要业务逻辑，可通过 OTA 更新 |
+
+启动流程：MCU 复位后从 RO 固件启动 → RO 验证 RW 固件签名 → 验证通过后跳转到 RW 执行。
+
+### 硬件写保护
+
+硬件写保护由专用 GPIO 信号控制：
+
+- **现代设备**：Cr50/GSC（安全芯片）提供硬件写保护 GPIO，连接到 EC SPI Flash、AP SPI Flash、EEPROM 等设备
+- **旧款设备**：使用物理写保护螺丝，需要手动移除才能禁用
+- **Bringup 阶段**：可通过移除电池来禁用硬件写保护
+
+启用/禁用硬件写保护（需要 Servo 或 CCD Open）：
+
+```bash
+# 启用硬件写保护
+dut-control fw_wp_state:force_on
+
+# 禁用硬件写保护
+dut-control fw_wp_state:force_off
+```
+
+### 软件写保护
+
+软件写保护通过 SPI Flash 的状态寄存器实现，可以独立于硬件写保护进行控制：
+
+```bash
+# 读取当前软件写保护状态
+ectool flashprotect
+
+# 启用软件写保护
+ectool flashprotect enable
+
+# 禁用软件写保护（需要硬件写保护已禁用）
+ectool flashprotect disable
+```
+
+### 写保护状态对 Flash 访问的影响
+
+| 写保护状态 | RO 区域 | RW 区域 |
+|-----------|---------|---------|
+| 未启用 | 可读可写 | 可读可写 |
+| 软件写保护启用 | 只读 | 软件同步前可写，之后只读 |
+| 硬件写保护启用 | 只读 | 只读 |
+
+### system_is_locked()
+
+`system_is_locked()` 函数返回系统的锁定状态。当系统锁定时，某些功能（如通过 Host Command 访问 Flash）将受到限制。
+
+### 参考资料
+
+- [Chromium OS 写保护文档](https://chromium.googlesource.com/chromiumos/docs/+/HEAD/write_protection.md)
+
+
+
+---
+
+<div class="chapter-nav">
+<a href="06_热管理.md">‹ 热管理</a>
+<a href="index.md">目录</a>
+<a href="08_安全与固件更新.md">安全与固件更新 ›</a>
+</div>

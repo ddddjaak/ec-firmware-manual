@@ -3,6 +3,12 @@ site_description: "Zephyr EC Firmware Development Manual"
 repo_name: ddddjaak/ec-firmware-manual
 repo_url: https://github.com/ddddjaak/ec-firmware-manual
 
+plugins:
+  - search
+  - minify:
+      minify_html: true
+  - glightbox
+
 theme:
   name: material
   language: zh
@@ -26,7 +32,6 @@ theme:
     - navigation.instant
     - navigation.tracking
     - navigation.sections
-    - navigation.expand
     - navigation.top
     - navigation.footer
     - search.suggest
@@ -35,6 +40,9 @@ theme:
     - content.code.copy
     - content.code.annotate
     - toc.follow
+    - content.tooltips
+    - content.action.edit
+    - content.action.view
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -59,6 +67,9 @@ markdown_extensions:
 extra_css:
   - stylesheets/extra.css
 
+extra_javascript:
+  - javascripts/extra.js
+
 extra:
   generator: false
 
@@ -69,7 +80,18 @@ nav:
   - 1. 引言: ch1_引言.md
   - 2. 开发环境准备: ch2_开发环境准备.md
   - 3. 开发包架构概述: ch3_Chipsea_Zephyr_开发包架构概述.md
-  - 4. 固件功能模块说明: ch4_固件功能模块说明.md
+  - 4. 固件功能模块说明:
+      - 概述: ch4/index.md
+      - 系统基础设施: ch4/01_系统基础设施.md
+      - 主机通信接口: ch4/02_主机通信接口.md
+      - 电源管理: ch4/03_电源管理.md
+      - 键盘与输入: ch4/04_键盘与输入.md
+      - 电池与充电: ch4/05_电池与充电.md
+      - 热管理: ch4/06_热管理.md
+      - USB与PD: ch4/07_USB与PD.md
+      - 安全与固件更新: ch4/08_安全与固件更新.md
+      - 外设与存储: ch4/09_外设与存储.md
+      - 调试与GPIO: ch4/10_调试与GPIO.md
   - 5. 应用开发指南: ch5_应用开发指南.md
   - 6. 调试与验证: ch6_调试与验证.md
   - 7. 移植与定制: ch7_移植与定制.md

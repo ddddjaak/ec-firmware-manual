@@ -1,3 +1,5 @@
+<div class="chapter-header"><span class="chapter-num">01</span><span class="separator">/</span><a href="index.md">首页</a><span class="separator">›</span><span>引言</span></div>
+
 # 引言
 
 
@@ -208,3 +210,17 @@ RTOS 的开发方案，则具备以下优势：
 - 功能开发：重点参考第 4、5 章，学习如何扩展固件功能；
 
 - 问题定位与移植：重点参考第 6、7 章，提升调试与定制能力。
+
+## EC 固件开发流程概览
+
+EC 固件的开发流程可概括为以下四个阶段：
+
+1.  **环境搭建** — 安装 Zephyr SDK、west 工具链、Python 依赖等，获取 Chipsea Zephyr 工程包。详见第 2 章「开发环境准备」。
+
+2.  **代码开发** — 基于 `ecfw-zephyr/app/` 中的功能模块和 `drivers/` 中的驱动进行开发。通过 Kconfig 配置功能开关，通过 Devicetree 描述硬件拓扑。详见第 3 章「架构概述」和第 4 章「固件功能模块说明」。
+
+3.  **构建与烧录** — 使用 `build.bat`（Windows）或 `west build` 命令编译固件，生成 `APROM.hex`。通过 J-Link 或 DediProg 烧录到目标芯片。详见第 6 章「调试与验证」。
+
+4.  **调试与测试** — 通过 J-Link RTT Viewer 查看运行日志，使用 Shell 命令交互调试，运行 twister 单元测试验证功能。详见第 6 章「调试与验证」。
+
+> **参考**：Chromium OS 的 EC 构建流程（使用 chroot + `make BOARD=<name>`）可参考 [Chromium OS Developer Guide](https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md)，但 Chipsea Zephyr EC 项目使用独立的工程包和构建脚本，不依赖 Chromium OS 环境。

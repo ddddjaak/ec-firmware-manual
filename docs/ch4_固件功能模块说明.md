@@ -1,3 +1,5 @@
+<div class="chapter-header"><span class="chapter-num">04</span><span class="separator">/</span><a href="index.md">首页</a><span class="separator">›</span><span>固件功能模块说明</span></div>
+
 # 固件功能模块说明
 
 
@@ -1443,3 +1445,234 @@ Application Firmware (Flash 中)
 - 根信任锚（如公钥哈希）应固化在硬件中，难以修改。
 - 验证失败必须导致启动中止，并进入安全恢复模式（如仅运行最小化 Bootloader 等待更新）。
 - 整个验证流程本身应是防篡改的。
+
+## USB-C 与电力传输（PD）
+
+USB-C 是 USB-IF 制定的连接器与线缆标准，电力传输（Power Delivery, PD）是基于该接口的电力协商协议。在笔记本 EC 中，USB-C/PD 子系统是最复杂的模块之一，涉及多个硬件组件和多层状态机。
+
+### PD 协议栈架构
+
+EC 的 PD 协议栈采用分层架构，由四个核心组件协作：
+
+| 组件 | 全称 | 职责 |
+|------|------|------|
+| **TCPC** | Type-C Port Controller | Type-C 端口控制器——管理 CC 引脚检测、插拔事件、VCONN 控制 |
+| **TCPM** | Type-C Port Manager | Type-C 端口管理器——运行在 EC 上的 PD 状态机，协调 TCPC/PPC/SSMUX |
+| **PPC** | Power Path Controller | 电源路径控制器——管理 VBUS 电源开关、过压/过流保护 |
+| **SSMUX** | SuperSpeed Mux | 高速信号复用器——切换 USB3/DP Alt Mode 的差分信号路由 |
+
+### 状态机
+
+PD 协议栈维护多个并发状态机：
+
+- **Type-C 状态机**：检测端口角色（Source/Sink/DRP）、电缆方向、音频模式等
+- **PD 状态机**：协商电力合同（电压/电流）、处理 Source/Sink Capabilities、Accept/Reject 等
+- **Source/Sink 状态机**：分别管理供电端和受电端的行为逻辑
+
+### SVDM 与 VDM
+
+- **VDM (Vendor Defined Messages)**：PD 规范允许厂商自定义消息，用于非标准功能
+- **SVDM (Structured VDM)**：USB-IF 定义的结构化 VDM，用于 Discover Identity、Discover SVIDs、Discover Modes、Enter/Exit Mode 等标准化流程
+
+### 电缆类型
+
+| 类型 | 特征 | 影响 |
+|------|------|------|
+| **E-Mark** | 电缆内含电子标记芯片 | 支持 5A 电流、USB4 等高级功能 |
+| **非 E-Mark** | 无标记芯片 | 最大支持 3A 电流 |
+| **VCONN** | 为 E-Mark 供电的 5V 电源 | EC 需要在 CC 引脚上提供 |
+
+### TCPC 通信接口
+
+EC 通过 I²C 总线与 TCPC 芯片通信，使用标准寄存器映射：
+
+| 寄存器 | 地址 | 功能 |
+|--------|------|------|
+| `TCPC_REG_VENDOR_ID` | 0x00 | 厂商 ID |
+| `TCPC_REG_ALERT` | 0x10 | 告警状态（插拔、PD 消息等） |
+| `TCPC_REG_CC_STATUS` | 0x1D | CC 引脚状态 |
+| `TCPC_REG_POWER_CTRL` | 0x1C | 电源控制（VCONN、VBUS 等） |
+
+### 调试命令
+
+EC Shell 提供以下 PD 调试命令：
+
+```
+uart:~$ pd <port> state      # 查看当前 PD 状态
+uart:~$ pd <port> charger    # 查看充电器信息
+uart:~$ pd <port> version    # 查看 PD 协议栈版本
+uart:~$ pd <port> dump       # 寄存器转储
+```
+
+### 详细参考资料
+
+- [Type-C 和 EC 端口控制器（TCPC）](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/new_driver_tcpc.md) — TCPC 驱动开发指南
+- [USB PD 调试](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/usb-pd-debugging.md) — PD 故障排查方法
+- [PD VDM](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/pd_vdm.md) — VDM/SVDM 消息详解
+
+## 固件写保护机制
+
+EC 固件的写保护是安全体系的重要组成部分，防止未授权的固件修改。写保护分为硬件写保护和软件写保护两层。
+
+### RO 与 RW 固件分区
+
+EC 固件分为两个区域：
+
+| 区域 | 说明 |
+|------|------|
+| **RO (Read-Only)** | 只读固件——包含启动代码和验证逻辑，工厂锁定后永不更改 |
+| **RW (Read-Write)** | 读写固件——包含主要业务逻辑，可通过 OTA 更新 |
+
+启动流程：MCU 复位后从 RO 固件启动 → RO 验证 RW 固件签名 → 验证通过后跳转到 RW 执行。
+
+### 硬件写保护
+
+硬件写保护由专用 GPIO 信号控制：
+
+- **现代设备**：Cr50/GSC（安全芯片）提供硬件写保护 GPIO，连接到 EC SPI Flash、AP SPI Flash、EEPROM 等设备
+- **旧款设备**：使用物理写保护螺丝，需要手动移除才能禁用
+- **Bringup 阶段**：可通过移除电池来禁用硬件写保护
+
+启用/禁用硬件写保护（需要 Servo 或 CCD Open）：
+
+```bash
+# 启用硬件写保护
+dut-control fw_wp_state:force_on
+
+# 禁用硬件写保护
+dut-control fw_wp_state:force_off
+```
+
+### 软件写保护
+
+软件写保护通过 SPI Flash 的状态寄存器实现，可以独立于硬件写保护进行控制：
+
+```bash
+# 读取当前软件写保护状态
+ectool flashprotect
+
+# 启用软件写保护
+ectool flashprotect enable
+
+# 禁用软件写保护（需要硬件写保护已禁用）
+ectool flashprotect disable
+```
+
+### 写保护状态对 Flash 访问的影响
+
+| 写保护状态 | RO 区域 | RW 区域 |
+|-----------|---------|---------|
+| 未启用 | 可读可写 | 可读可写 |
+| 软件写保护启用 | 只读 | 软件同步前可写，之后只读 |
+| 硬件写保护启用 | 只读 | 只读 |
+
+### system_is_locked()
+
+`system_is_locked()` 函数返回系统的锁定状态。当系统锁定时，某些功能（如通过 Host Command 访问 Flash）将受到限制。
+
+### 参考资料
+
+- [Chromium OS 写保护文档](https://chromium.googlesource.com/chromiumos/docs/+/HEAD/write_protection.md)
+
+## 核心运行时架构
+
+Legacy EC 的核心运行时负责任务调度、中断处理、启动流程和内存管理。虽然 Chipsea Zephyr EC 使用 Zephyr RTOS 替代了 Legacy 运行时，但理解 Legacy 架构有助于阅读上游文档和理解 EC 的设计约束。
+
+### 任务系统
+
+Legacy EC 采用**协作式优先级调度**模型：
+
+- **四个优先级**：IDLE、LOW、HIGH、HIGHEST
+- **协作式调度**：任务不会被抢占，只有主动调用 `task_wait_event()` 时才切换
+- **事件驱动**：通过 `task_set_event()` 向目标任务发送事件位图
+- **中断延迟最小化**：中断处理程序（INT handler）尽可能短，将实际工作推迟到任务上下文
+
+```c
+/* 任务定义 */
+void thermal_task(void) {
+    while (1) {
+        /* 处理温度传感器 */
+        process_temp_sensors();
+        /* 等待下一个周期事件 */
+        task_wait_event(THERMAL_PERIOD_MS * MSEC);
+    }
+}
+DECLARE_TASK(thermal_task, TASK_PRIORITY_LOW, thermal_task_stack);
+```
+
+### Hooks 机制
+
+Hooks 是 EC 中的回调机制，当特定事件发生时自动调用注册的处理函数：
+
+| Hook 类型 | 触发时机 | 典型用途 |
+|-----------|----------|----------|
+| `HOOK_INIT` | 系统初始化完成后 | 初始化外设、注册事件监听 |
+| `HOOK_CHIPSET_STARTUP` | AP 启动时 | 使能外设电源、开启传感器 |
+| `HOOK_CHIPSET_SHUTDOWN` | AP 关机时 | 关闭外设、保存状态 |
+| `HOOK_CHIPSET_SUSPEND` | AP 进入 S3 暂停 | 降低功耗、关闭非必要外设 |
+| `HOOK_CHIPSET_RESUME` | AP 从 S3 恢复 | 恢复外设状态 |
+| `HOOK_AC_CHANGE` | AC 电源状态变化 | 切换充电策略 |
+| `HOOK_LID_CHANGE` | 翻盖状态变化 | 通知 AP 显示器状态 |
+
+### Deferred Functions
+
+Deferred Functions 允许在**较低优先级上下文**中执行回调：
+
+- 在中断上下文中无法执行耗时操作（如 I²C 通信）
+- 通过 `hook_call_deferred()` 将回调推迟到主循环执行
+- 支持延迟执行（指定超时时间）
+
+```c
+/* 在中断中推迟执行 */
+void usb_interrupt_handler(void) {
+    /* 仅设置标志，不做耗时操作 */
+    usb_event_pending = 1;
+    hook_call_deferred(&usb_process_deferred_data, 0);
+}
+
+/* 在主循环中执行 */
+static void usb_process_deferred(void) {
+    /* 这里可以安全地进行 I²C 通信 */
+    process_usb_events();
+}
+DECLARE_DEFERRED(usb_process_deferred);
+```
+
+### 看门狗
+
+EC 使用硬件看门狗防止死锁：
+
+- **喂狗周期**：任务必须在规定时间内喂狗，否则系统复位
+- **中断模式**：看门狗中断会在复位前调用 `panic` 函数，保存崩溃现场
+- **调试模式**：调试时可暂停看门狗计数（`CONFIG_WATCHDOG_HELP`）
+
+### 启动流程
+
+```
+上电 → 芯片初始化 → 读取 Flash 头 →
+→ 选择启动分区（RO/RW）→ RW 签名验证 →
+→ 跳转到 RW → HOOK_INIT 初始化 →
+→ 主循环（任务调度）
+```
+
+### 时间系统
+
+EC 使用 32 位计数器实现时间管理：
+
+| 函数 | 用途 |
+|------|------|
+| `get_time()` | 获取当前时间（微秒精度） |
+| `usleep(usecs)` | 忙等待指定微秒 |
+| `msleep(msecs)` | 等待指定毫秒（任务上下文） |
+| `task_wait_event(timeout)` | 等待事件或超时 |
+
+> **注意**：Chipsea Zephyr EC 使用 Zephyr 的 `k_timer`、`k_sleep()`、`k_usleep()` 等 API 替代了 Legacy 时间系统。
+
+### 内存模型
+
+Legacy EC 通常无 MMU，代码在物理地址空间运行：
+
+- **RO 区域**：启动代码和验证逻辑
+- **RW 区域**：可更新的业务代码
+- **数据区域**：全局变量、栈
+- **共享内存**：EC 和 AP 通过共享内存交换数据（如电池状态、传感器数据）

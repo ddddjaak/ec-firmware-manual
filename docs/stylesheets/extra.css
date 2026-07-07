@@ -366,3 +366,293 @@
 [data-md-color-scheme="slate"] .md-nav__link--active {
   color: #00e5ff;
 }
+
+/* ============================================================
+   改进 1: Hero 区域 — 芯片引脚 SVG + 赛博统计
+   ============================================================ */
+
+/* 芯片引脚 SVG 背景层 */
+.cyber-hero .hero-circuit-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+[data-md-color-scheme="default"] .cyber-hero .hero-circuit-bg {
+  opacity: 0.06;
+}
+
+.cyber-hero .hero-circuit-bg svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 芯片型号标签 */
+.cyber-hero .hero-chip-label {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.9rem;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 2px;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+[data-md-color-scheme="slate"] .hero-chip-label {
+  color: #00e5ff;
+  background: rgba(0, 229, 255, 0.06);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.08);
+}
+
+[data-md-color-scheme="default"] .hero-chip-label {
+  color: #651FFF;
+  background: rgba(103, 58, 183, 0.06);
+  border-color: rgba(103, 58, 183, 0.3);
+}
+
+/* 标题下方装饰线 */
+.cyber-hero .hero-divider {
+  width: 120px;
+  height: 2px;
+  margin: 1.2rem auto;
+  background: linear-gradient(90deg, transparent, #00e5ff, transparent);
+  border: none;
+  position: relative;
+  z-index: 1;
+}
+
+[data-md-color-scheme="default"] .cyber-hero .hero-divider {
+  background: linear-gradient(90deg, transparent, #651FFF, transparent);
+}
+
+/* Hero 统计行 */
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  margin-top: 1.8rem;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-stat {
+  text-align: center;
+}
+
+.hero-stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: block;
+}
+
+[data-md-color-scheme="slate"] .hero-stat-value {
+  color: #00e5ff;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
+}
+
+[data-md-color-scheme="default"] .hero-stat-value {
+  color: #651FFF;
+}
+
+.hero-stat-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 0.2rem;
+  display: block;
+}
+
+[data-md-color-scheme="slate"] .hero-stat-label {
+  color: #6a7090;
+}
+
+[data-md-color-scheme="default"] .hero-stat-label {
+  color: #888;
+}
+
+/* ============================================================
+   章节底部导航
+   ============================================================ */
+
+.chapter-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  margin-top: 2rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+[data-md-color-scheme="slate"] .chapter-nav {
+  background: rgba(103, 58, 183, 0.06);
+  border: 1px solid rgba(103, 58, 183, 0.12);
+}
+
+[data-md-color-scheme="default"] .chapter-nav {
+  background: rgba(103, 58, 183, 0.03);
+  border: 1px solid rgba(103, 58, 183, 0.08);
+}
+
+.chapter-nav a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+[data-md-color-scheme="slate"] .chapter-nav a:hover {
+  color: #00e5ff;
+}
+
+[data-md-color-scheme="default"] .chapter-nav a:hover {
+  color: #651FFF;
+}
+
+/* ============================================================
+   改进 2: 代码块语言标签
+   ============================================================ */
+
+/* 代码块语言标签 — 暗色模式 */
+[data-md-color-scheme="slate"] .md-typeset pre > code::before {
+  content: attr(class);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.15rem 0.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(0, 229, 255, 0.5);
+  background: rgba(0, 229, 255, 0.06);
+  border-bottom-left-radius: 4px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 代码块语言标签 — 亮色模式 */
+[data-md-color-scheme="default"] .md-typeset pre > code::before {
+  content: attr(class);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.15rem 0.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(103, 58, 183, 0.5);
+  background: rgba(103, 58, 183, 0.06);
+  border-bottom-left-radius: 4px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 去掉 language- 前缀 */
+.md-typeset pre > code[class*="language-"]::before {
+  content: attr(data-lang);
+}
+
+/* 代码块需要 relative 定位 */
+.md-typeset pre > code {
+  position: relative;
+}
+
+/* 代码块右上角留出空间给标签 */
+.md-typeset pre > code {
+  padding-top: 1.8rem;
+}
+
+/* ============================================================
+   改进 3: 章节页面面包屑导航条
+   ============================================================ */
+
+/* 章节头部导航条 */
+.chapter-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+[data-md-color-scheme="slate"] .chapter-header {
+  background: rgba(103, 58, 183, 0.08);
+  border: 1px solid rgba(103, 58, 183, 0.15);
+  color: #8890b0;
+}
+
+[data-md-color-scheme="default"] .chapter-header {
+  background: rgba(103, 58, 183, 0.04);
+  border: 1px solid rgba(103, 58, 183, 0.1);
+  color: #666;
+}
+
+.chapter-header a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+[data-md-color-scheme="slate"] .chapter-header a:hover {
+  color: #00e5ff;
+}
+
+[data-md-color-scheme="default"] .chapter-header a:hover {
+  color: #651FFF;
+}
+
+.chapter-header .chapter-num {
+  font-weight: 700;
+  margin-right: 0.25rem;
+}
+
+[data-md-color-scheme="slate"] .chapter-header .chapter-num {
+  color: #00e5ff;
+}
+
+[data-md-color-scheme="default"] .chapter-header .chapter-num {
+  color: #651FFF;
+}
+
+.chapter-header .separator {
+  color: rgba(103, 58, 183, 0.3);
+  margin: 0 0.15rem;
+}
+
+/* ============================================================
+   改进 4: Mermaid 图表暗色适配
+   ============================================================ */
+
+[data-md-color-scheme="slate"] .mermaid {
+  filter: invert(0.88) hue-rotate(180deg);
+}
+
+/* ============================================================
+   改进 5: 页面进度条 (顶部)
+   ============================================================ */
+
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, #673AB7, #00e5ff);
+  z-index: 999;
+  transition: width 0.1s;
+}
+
+[data-md-color-scheme="default"] .reading-progress {
+  background: linear-gradient(90deg, #651FFF, #00BCD4);
+}

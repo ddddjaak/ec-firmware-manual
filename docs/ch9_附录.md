@@ -1,3 +1,5 @@
+<div class="chapter-header"><span class="chapter-num">09</span><span class="separator">/</span><a href="index.md">首页</a><span class="separator">›</span><span>附录</span></div>
+
 # 附录
 
 
@@ -501,3 +503,75 @@ EVB 评估板上关键信号的 GPIO 映射关系，以下列出电源管理、e
 | 中断向量表 (IRQn_Type 枚举) | `EC-Zephyr/ecfwwork/zephyr_modules_csce250x/hal/csce250x/cmsis/csce250x/include/csce250x.h` |
 | EVB 板级引脚定义 (EC_GPIO_*) | `EC-Zephyr/ecfw-zephyr/boards/chipsea/evb_csce250x.h` |
 | EC GPIO 端口引脚宏 (`EC_GPIO_PORT_PIN`) | `EC-Zephyr/ecfw-zephyr/boards/chipsea/csce250x_pin.h` |
+
+## EC 术语与缩写速查
+
+本节汇总 EC 固件开发中常见的缩写和技术术语，方便快速查阅。
+
+### 核心概念
+
+| 缩写 | 全称 | 说明 |
+|------|------|------|
+| **EC** | Embedded Controller | 嵌入式控制器——管理键盘、电池、充电、USB、传感器等的低功耗 MCU |
+| **AP** | Application Processor | 应用处理器——运行操作系统（ChromeOS/Windows）的主处理器 |
+| **MCU** | Microcontroller Unit | 微控制器单元——包含 CPU、ROM、RAM 和外设的小型芯片 |
+| **PMIC** | Power Management IC | 电源管理集成电路——用于开关电源轨 |
+| **GSC** | Google Security Chip | Google 安全芯片（原 Cr50）——提供硬件写保护、TPM 功能 |
+
+### 通信接口
+
+| 缩写 | 全称 | 说明 |
+|------|------|------|
+| **I2C** | Inter-Integrated Circuit | 两线制同步总线（SCL+SDA），100/400 KHz |
+| **SPI** | Serial Peripheral Interface | 四线制同步总线（CLK+SDO+SDI+CS），100 MHz+ |
+| **eSPI** | Enhanced SPI | Intel 增强型 SPI，替代 LPC，最高 66 MHz / 264 Mbps |
+| **LPC** | Low Pin Count | 传统 AP-EC 通信总线，33 MHz / 133 Mbps，已被 eSPI 取代 |
+| **UART** | Universal Asynchronous Receiver/Transmitter | 异步串口，115200 bps，用于调试控制台 |
+| **SHI** | SPI Host Interface | AP 作为 SPI 控制器、EC 作为 SPI 外设的接口（非 x86 平台） |
+
+### USB-C / PD
+
+| 缩写 | 全称 | 说明 |
+|------|------|------|
+| **PD** | Power Delivery | USB 电力传输协议 |
+| **TCPC** | Type-C Port Controller | Type-C 端口控制器——管理 CC 引脚和插拔 |
+| **TCPM** | Type-C Port Manager | Type-C 端口管理器——运行在 EC 上的 PD 状态机 |
+| **PPC** | Power Path Controller | 电源路径控制器——管理 VBUS 开关和保护 |
+| **SSMUX** | SuperSpeed Mux | 高速信号复用器——切换 USB3/DP 信号路由 |
+| **VDM** | Vendor Defined Messages | PD 厂商自定义消息 |
+| **SVDM** | Structured VDM | USB-IF 结构化 VDM（Discover Identity 等） |
+| **VCONN** | Connector Voltage | 为 E-Mark 电缆供电的 5V 电源 |
+| **E-Mark** | Electronic Marker | 电子标记电缆（内含标记芯片，支持 5A/USB4） |
+
+### 传感器
+
+| 缩写 | 全称 | 说明 |
+|------|------|------|
+| **ADC** | Analog-to-Digital Converter | 模数转换器 |
+| **ALS** | Ambient Light Sensor | 环境光传感器——自动调节屏幕/键盘背光 |
+| **ACCEL** | Accelerometer | 加速度计——三轴加速度测量 |
+| **GYRO** | Gyroscope | 陀螺仪——角动量测量 |
+| **MAG** | Magnetometer | 磁力计——数字罗盘 |
+| **BAR** | Barometer | 气压计 |
+| **DPTF** | Dynamic Power and Thermal Framework | Intel 动态电源与热框架 |
+
+### 系统功能
+
+| 缩写 | 全称 | 说明 |
+|------|------|------|
+| **GPIO** | General Purpose I/O | 通用输入/输出引脚 |
+| **PWM** | Pulse Width Modulation | 脉宽调制——控制风扇转速、背光亮度 |
+| **MKBP** | Matrix Keyboard Protocol | 矩阵键盘协议——EC 向 AP 通信异步事件 |
+| **CBI** | CrOS Board Information | CrOS 板级信息（版本、SKU、型号） |
+| **CEC** | Consumer Electronics Control | 消费电子控制——HDMI 单线双向总线 |
+| **BC1.2** | Battery Charging 1.2 | USB 电池充电规范 1.2 版 |
+| **MST** | Multi-Stream Transport | DisplayPort 多流传输 |
+
+### 测试与调试
+
+| 缩写 | 全称 | 说明 |
+|------|------|------|
+| **FAFT** | Fully Automated Firmware Test | 全自动固件测试套件 |
+| **CCD** | Case Closed Debugging | 封闭式调试——无需拆机即可调试 |
+| **ectool** | — | AP 端命令行工具，向 EC 发送命令 |
+| **Retimer** | — | 信号重定时器——恢复和重传高速信号 |
