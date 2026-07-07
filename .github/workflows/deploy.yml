@@ -1,17 +1,12 @@
-name: Deploy MkDocs to GitHub Pages
+name: Build MkDocs (private repo — no Pages deploy)
 
 on:
   push:
     branches:
       - main
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +15,3 @@ jobs:
           python-version: '3.11'
       - run: pip install mkdocs-material
       - run: mkdocs build
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-      - uses: actions/deploy-pages@v4
