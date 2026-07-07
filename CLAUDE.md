@@ -48,7 +48,7 @@ git push origin main
 
 **部署原理**：
 1. `push` 到 `main` 触发 GitHub Actions
-2. `pip install mkdocs-material` → `mkdocs build`
+2. `pip install mkdocs-material mkdocs-minify-plugin mkdocs-glightbox` → `mkdocs build`
 3. `upload-pages-artifact` 上传 `site/`
 4. `deploy-pages` 部署到 `ddddjaak.github.io/ec-firmware-manual/`
 
@@ -59,9 +59,12 @@ git push origin main
 ```
 docs/                              ← MkDocs 源文件
   index.md                         ← 首页（魔幻科技感 Hero + grid cards）
-  ch1_引言.md … ch9_附录.md
+  ch1_引言.md                       ← 第1章（单文件）
+  ch2/ … ch9/                      ← 第2-9章（每章 index.md + 子章节 01_*.md … Nn_*.md）
+  ch4/                             ← 第4章（10个子章节）
   media/                           ← 文档图片
   stylesheets/extra.css            ← 赛博暗色主题 + 首页特效
+  javascripts/extra.js             ← 自定义 JS
 mkdocs.yml                         ← MkDocs 配置
 .github/workflows/deploy.yml       ← GitHub Actions 自动部署
 EC-Zephyr/                         ← 固件源码（本地参考，不入 git）
