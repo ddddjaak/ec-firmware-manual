@@ -656,3 +656,258 @@
 [data-md-color-scheme="default"] .reading-progress {
   background: linear-gradient(90deg, #651FFF, #00BCD4);
 }
+
+/* ============================================================
+   首页：功能卡片网格
+   ============================================================ */
+
+.home-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.feature-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  text-decoration: none !important;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.feature-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.feature-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.feature-body {
+  flex: 1;
+}
+
+/* 暗色模式 */
+[data-md-color-scheme="slate"] .feature-card {
+  background: rgba(20, 23, 37, 0.7);
+  border-color: rgba(103, 58, 183, 0.15);
+}
+
+[data-md-color-scheme="slate"] .feature-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+[data-md-color-scheme="slate"] .feature-card h3 {
+  color: #e0e4f0;
+}
+
+[data-md-color-scheme="slate"] .feature-card p {
+  color: #8890b0;
+}
+
+[data-md-color-scheme="slate"] .feature-icon {
+  background: rgba(103, 58, 183, 0.12);
+}
+
+/* 亮色模式 */
+[data-md-color-scheme="default"] .feature-card {
+  background: #fff;
+  border-color: rgba(103, 58, 183, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+[data-md-color-scheme="default"] .feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(103, 58, 183, 0.1);
+}
+
+[data-md-color-scheme="default"] .feature-card h3 {
+  color: #333;
+}
+
+[data-md-color-scheme="default"] .feature-card p {
+  color: #777;
+}
+
+[data-md-color-scheme="default"] .feature-icon {
+  background: rgba(103, 58, 183, 0.06);
+}
+
+/* 每张卡独特的 hover 边框颜色 */
+[data-md-color-scheme="slate"] .feature-quickstart:hover {
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+[data-md-color-scheme="slate"] .feature-dev:hover {
+  border-color: rgba(103, 58, 183, 0.6);
+  box-shadow: 0 0 30px rgba(103, 58, 183, 0.15), 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+[data-md-color-scheme="slate"] .feature-porting:hover {
+  border-color: rgba(0, 200, 83, 0.5);
+  box-shadow: 0 0 30px rgba(0, 200, 83, 0.1), 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+[data-md-color-scheme="slate"] .feature-ref:hover {
+  border-color: rgba(255, 171, 0, 0.5);
+  box-shadow: 0 0 30px rgba(255, 171, 0, 0.1), 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+[data-md-color-scheme="default"] .feature-quickstart:hover { border-color: #00BCD4; }
+[data-md-color-scheme="default"] .feature-dev:hover { border-color: #651FFF; }
+[data-md-color-scheme="default"] .feature-porting:hover { border-color: #00C853; }
+[data-md-color-scheme="default"] .feature-ref:hover { border-color: #FF6D00; }
+
+/* ============================================================
+   首页：全部内容 — 分组链接列表
+   ============================================================ */
+
+.home-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  margin: 1.5rem 0;
+}
+
+.section-group h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 0.8rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid;
+}
+
+[data-md-color-scheme="slate"] .section-group h3 {
+  color: #6a7090;
+  border-color: rgba(103, 58, 183, 0.2);
+}
+
+[data-md-color-scheme="default"] .section-group h3 {
+  color: #999;
+  border-color: rgba(103, 58, 183, 0.1);
+}
+
+.section-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.section-link {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 6px;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+}
+
+.sl-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  width: 32px;
+  text-align: center;
+}
+
+.sl-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  line-height: 1.3;
+}
+
+.sl-text strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.sl-text small {
+  font-size: 0.75rem;
+}
+
+[data-md-color-scheme="slate"] .section-link {
+  background: rgba(20, 23, 37, 0.4);
+  border: 1px solid transparent;
+}
+
+[data-md-color-scheme="slate"] .section-link:hover {
+  background: rgba(103, 58, 183, 0.1);
+  border-color: rgba(103, 58, 183, 0.25);
+  transform: translateX(4px);
+}
+
+[data-md-color-scheme="slate"] .sl-text strong {
+  color: #c8d0e0;
+}
+
+[data-md-color-scheme="slate"] .sl-text small {
+  color: #6a7090;
+}
+
+[data-md-color-scheme="default"] .section-link {
+  background: rgba(103, 58, 183, 0.02);
+  border: 1px solid transparent;
+}
+
+[data-md-color-scheme="default"] .section-link:hover {
+  background: rgba(103, 58, 183, 0.06);
+  border-color: rgba(103, 58, 183, 0.15);
+  transform: translateX(4px);
+}
+
+[data-md-color-scheme="default"] .sl-text strong {
+  color: #333;
+}
+
+[data-md-color-scheme="default"] .sl-text small {
+  color: #888;
+}
+
+/* ============================================================
+   首页：版本信息卡片
+   ============================================================ */
+
+.home-meta {
+  margin: 2rem 0;
+}
+
+.home-meta table {
+  width: 100%;
+}
+
+[data-md-color-scheme="slate"] .home-meta table {
+  background: rgba(20, 23, 37, 0.5);
+  border: 1px solid rgba(103, 58, 183, 0.15);
+  border-radius: 8px;
+}
+
+[data-md-color-scheme="default"] .home-meta table {
+  background: rgba(103, 58, 183, 0.02);
+  border: 1px solid rgba(103, 58, 183, 0.1);
+  border-radius: 8px;
+}

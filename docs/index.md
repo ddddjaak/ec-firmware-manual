@@ -19,8 +19,8 @@ hide:
 <div class="hero-stats" markdown>
 
 <div class="hero-stat" markdown>
-<span class="hero-stat-value">9</span>
-<span class="hero-stat-label">章节</span>
+<span class="hero-stat-value">30</span>
+<span class="hero-stat-label">分钟上手</span>
 </div>
 
 <div class="hero-stat" markdown>
@@ -44,102 +44,142 @@ hide:
 
 ---
 
-## 📖 快速入口
+## 快速入口
 
-<div class="grid cards" markdown>
+<div class="home-feature-grid">
 
--   :material-rocket-launch: **快速上手**
+<a href="quickstart/index.md" class="feature-card feature-quickstart">
+  <div class="feature-icon">🚀</div>
+  <div class="feature-body">
+    <h3>快速上手</h3>
+    <p>30 分钟完成环境搭建、编译并烧录第一个固件</p>
+  </div>
+</a>
 
-    ---
+<a href="dev/index.md" class="feature-card feature-dev">
+  <div class="feature-icon">📖</div>
+  <div class="feature-body">
+    <h3>开发指南</h3>
+    <p>架构设计、功能模块、驱动开发、调试验证 — 日常核心参考</p>
+  </div>
+</a>
 
-    30 分钟完成环境搭建、编译并烧录第一个固件
+<a href="ch7/index.md" class="feature-card feature-porting">
+  <div class="feature-icon">🔧</div>
+  <div class="feature-body">
+    <h3>移植与定制</h3>
+    <p>新平台移植、驱动开发、从传统 EC 迁移到 Zephyr</p>
+  </div>
+</a>
 
-    [:material-arrow-right: 开始](quickstart/index.md)
-
--   :material-code-braces: **开发指南**
-
-    ---
-
-    架构设计、功能模块、外设驱动、调试验证 — 日常开发核心参考
-
-    [:material-arrow-right: 进入](dev/index.md)
-
--   :material-swap-horizontal: **移植与定制**
-
-    ---
-
-    新平台移植、驱动开发、从传统 EC 迁移
-
-    [:material-arrow-right: 阅读](ch7/index.md)
-
--   :material-book-open-variant: **参考手册**
-
-    ---
-
-    命令速查、术语表、硬件接口、开源资源
-
-    [:material-arrow-right: 查阅](ref/index.md)
-
-</div>
-
----
-
-## :material-format-list-bulleted: 全部内容
-
-<div class="grid cards" markdown>
-
--   :material-rocket-launch: **快速上手** — 环境搭建、编译、烧录
-
-    [:material-arrow-right: 阅读](quickstart/index.md)
-
--   :material-layers: **架构与配置** — 分层模型、目录结构、DTS/Kconfig
-
-    [:material-arrow-right: 阅读](dev/architecture/index.md)
-
--   :material-chip: **功能模块** — 10 个子模块详解
-
-    [:material-arrow-right: 阅读](dev/modules/index.md)
-
--   :material-code-tags: **应用开发** — 新增模块、外设驱动、任务模型
-
-    [:material-arrow-right: 阅读](dev/appdev/index.md)
-
--   :material-bug: **调试与验证** — 日志、测试、崩溃分析、FAQ
-
-    [:material-arrow-right: 阅读](dev/debug/index.md)
-
--   :material-swap-horizontal: **移植与定制** — 新平台移植、驱动开发、迁移
-
-    [:material-arrow-right: 阅读](ch7/index.md)
-
--   :material-security: **最佳实践** — 规范、功耗、安全
-
-    [:material-arrow-right: 阅读](ch8/index.md)
-
--   :material-book-open-variant: **参考手册** — 命令速查、术语、资源
-
-    [:material-arrow-right: 阅读](ref/index.md)
+<a href="ref/index.md" class="feature-card feature-ref">
+  <div class="feature-icon">📋</div>
+  <div class="feature-body">
+    <h3>参考手册</h3>
+    <p>命令速查、术语表、硬件接口参考、开源资源链接</p>
+  </div>
+</a>
 
 </div>
 
 ---
 
-<div class="info-box" markdown>
+## 全部内容
+
+<div class="home-sections">
+
+<div class="section-group">
+
+### 开发指南
+
+<div class="section-links">
+
+<a href="dev/architecture/index.md" class="section-link">
+  <span class="sl-icon">🏛</span>
+  <span class="sl-text">
+    <strong>架构与配置</strong>
+    <small>分层模型 · 目录结构 · DTS/Kconfig</small>
+  </span>
+</a>
+
+<a href="dev/modules/index.md" class="section-link">
+  <span class="sl-icon">🧩</span>
+  <span class="sl-text">
+    <strong>功能模块</strong>
+    <small>电源 · 键盘 · 电池 · 热管理 · USB/PD 等 10 个模块</small>
+  </span>
+</a>
+
+<a href="dev/appdev/index.md" class="section-link">
+  <span class="sl-icon">💻</span>
+  <span class="sl-text">
+    <strong>应用开发</strong>
+    <small>新增模块 · 外设驱动 · 任务模型 · 主机通信</small>
+  </span>
+</a>
+
+<a href="dev/debug/index.md" class="section-link">
+  <span class="sl-icon">🐛</span>
+  <span class="sl-text">
+    <strong>调试与验证</strong>
+    <small>日志 · 单元测试 · 崩溃分析 · FAQ</small>
+  </span>
+</a>
+
+</div>
+
+</div>
+
+<div class="section-group">
+
+### 更多资源
+
+<div class="section-links">
+
+<a href="ch7/index.md" class="section-link">
+  <span class="sl-icon">🔧</span>
+  <span class="sl-text">
+    <strong>移植与定制</strong>
+    <small>BSP 创建 · 设备树适配 · 驱动开发 · 迁移指南</small>
+  </span>
+</a>
+
+<a href="ch8/index.md" class="section-link">
+  <span class="sl-icon">✨</span>
+  <span class="sl-text">
+    <strong>最佳实践</strong>
+    <small>代码规范 · 功耗优化 · 安全加固 · 协作流程</small>
+  </span>
+</a>
+
+<a href="ref/index.md" class="section-link">
+  <span class="sl-icon">📋</span>
+  <span class="sl-text">
+    <strong>参考手册</strong>
+    <small>命令速查 · 术语表 · 硬件接口 · 开源资源</small>
+  </span>
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+---
+
+<div class="home-meta">
 
 | | |
 |---|---|
 | **版本** | V1.0 (2026-05-21) |
-| **适用平台** | ARM EC — CSCE10X / CSCE201X / CSCE250X 系列 |
+| **适用平台** | CSCE10X / CSCE201X / CSCE250X |
 | **工具链** | VS Code + Zephyr 3.7.0 LTS |
 
 </div>
 
----
-
-<div class="page-footer" markdown>
+<div class="page-footer">
 
 **V1.0** · 基于 Zephyr 3.7.0 LTS
-
-有问题？请通过内部渠道反馈
 
 </div>
