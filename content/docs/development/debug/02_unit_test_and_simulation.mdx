@@ -1,0 +1,179 @@
+---
+title: native_sim — 最快，适合算法与逻辑测试
+---
+
+## 单元测试与仿真环境（Unit Test）
+
+### 测试的重要性与目标
+
+对于 EC 固件而言，测试不是可有可无的"加分项"，而是保障系统可靠性的基石。EC 负责电源管理、热控制、键盘扫描等安全关键功能，一个逻辑错误可能导致过热、意外断电甚至硬件损坏。具体来说，测试的核心目标包括：
+
+1. 安全性与可靠性的最后防线：在电源和热管理路径上，任何边界条件错误都可能在量产设备上被放大，自动化测试能在合入代码前捕获这些缺陷。
+
+2. 回归预防：EC 固件迭代频繁，一个看似无关的修改可能破坏已有功能。持续运行的测试套件可以即时发现回归，避免退行性缺陷流入固件发布。
+
+3. OTA 更新的信心保障：EC 固件通过 OTA 推送时，一旦出现问题，修复成本极高（可能需要物理返修）。充分的单元测试和集成测试是决定能否安全推送的决策依据。
+
+Zephyr 推崇"在仿真环境中做单元测试，在真实硬件上做集成测试"的分层测试策略：逻辑密集型代码（算法、状态机、协议解析）在 `native_sim` 上以 Linux 进程形式运行并验证；需要真实时序和硬件特性的代码则通过 HIL 测试在目标板卡上验收。这种策略兼顾了开发迭代速度与测试置信度。
+
+### Zephyr 的 ztest 测试框架
+
+Zephyr 内置了 `ztest` 单元测试框架，专为嵌入式场景设计，支持在仿真环境或真实硬件上运行测试用例。其 API 简洁直观，与 Zephyr 内核深度集成。
+
+核心 API： `ZTEST(suite_name, test_name)` 宏用于定义测试用例，`zassert_*()` 系列宏用于断言验证。常用断言包括 `zassert_equal()`、`zassert_true()`、`zassert_within()` 等。以下是测试电池充电百分比计算的完整示例：
+
+```c
+#include &lt;zephyr/ztest.h&gt;
+
+ZTEST(battery_test, test_charge_percent)
+{
+    uint8_t result = battery_calc_percent(3800, 4200, 3000);
+    zassert_equal(result, 50, "expected 50%% got %d", result);
+}
+
+ZTEST_SUITE(battery_test, NULL, NULL, NULL, NULL, NULL);
+```
+
+构建与运行： 在 `tests/` 目录下创建测试子目录并添加 `CMakeLists.txt`，通过以下命令编译并运行：
+
+```bash
+west build -b native_sim tests/battery
+west build -t run
+```
+
+测试套件管理： `ztest_test_suite()` 或 `ZTEST_SUITE()` 将多个测试用例组织为套件，并支持设置 `setup` / `teardown` 回调函数，用于初始化和清理测试环境。`before` / `after` 参数可在每个测试用例前后执行公共逻辑，避免重复代码。
+
+### 仿真与虚拟运行环境
+
+Zephyr 支持多种仿真运行模式，开发者可根据测试目标灵活选择：
+
+- `native_sim`（推荐首选）：将 Zephyr 固件编译为 Linux 原生可执行文件，在宿主机上直接运行。无需任何硬件或模拟器，编译和启动速度极快（秒级），非常适合在 CI 流水线中批量运行。缺点是无法模拟 ARM 特定指令（如 CMSIS 操作）和真实外设时序。对于 EC 固件中纯算法逻辑的测试（电池电量估算、热策略决策、键盘矩阵解码），`native_sim` 是最高效的选择。
+
+- QEMU： 模拟完整的 ARM Cortex-M 处理器，可执行真实的 ARM 二进制指令。比 `native_sim` 更接近真实硬件，能捕获 ARM 架构相关的问题（如 MPU 配置、中断优先级分组），但运行速度较慢。适合测试底层驱动逻辑和中断处理流程。
+
+构建与运行命令：
+
+```bash
+## native_sim — 最快，适合算法与逻辑测试
+west build -b native_sim -t run
+
+## QEMU (ARM Cortex-M) — 更接近真实硬件
+west build -b mps2_an385 -t run
+```
+
+对于 EC 固件开发，推荐策略是：日常开发和 CI 使用 `native_sim` 覆盖算法层测试，在发版前用 QEMU 或真实硬件做一轮补充验证。
+
+### 模拟外设与输入事件
+
+在仿真环境中，没有真实的外设硬件，需要通过 Mock / Stub 技术模拟外设行为，让上层逻辑在"以为硬件正常"的前提下运行。
+
+Mock 外设驱动： 在 `native_sim` 环境中，可以编写桩（stub）驱动程序，替代真实的 I2C / GPIO / ADC 驱动。桩驱动不操作硬件寄存器，而是直接返回预设值。以下示例展示如何模拟一个始终返回 45 °C 的温度传感器：
+
+```c
+// 模拟温度传感器：始终返回 45.0°C
+int mock_temp_read(const struct device *dev, uint16_t *val)
+{
+    *val = 450;  // 45.0°C，单位为 0.1°C
+    return 0;
+}
+```
+
+模拟输入事件： 测试中可注入虚拟的外部事件——键盘扫描码、GPIO 电平变化、定时器触发等。例如，测试键盘矩阵解码逻辑时，可以在测试用例中直接调用 `keyboard_scan_inject(row, col, pressed)` 来模拟按键动作，无需真实的键盘硬件。
+
+测试装置 (Fixture)： 使用 `ztest_rule_fixture` 宏可以在每个测试用例前后自动设置和清理 Mock 环境，确保测试之间互不污染：
+
+```c
+static void mock_setup(void *fixture) {
+    /* 注册桩驱动、初始化 Mock 数据 */
+}
+static void mock_teardown(void *fixture) {
+    /* 清理状态、恢复默认值 */
+}
+```
+
+将 Mock 代码统一放置在 `tests/mocks/` 目录下，多个测试模块可以复用同一套桩驱动，减少重复工作。
+
+### 硬件在环测试（HIL）与混合仿真
+
+硬件在环（Hardware-in-the-Loop, HIL）测试是将真实 EC 板卡接入自动化测试平台，由上位机通过 I2C / SPI / UART 等接口驱动测试流程。它是发现时序问题、外设兼容性缺陷和功耗异常的"终极手段"。
+
+典型 HIL 测试流程：
+
+1. 连接测试硬件： 将 EC 开发板通过调试器和串口连接到测试主机，外设总线（I2C、SPI）连接至逻辑分析仪或总线模拟器。
+
+2. 自动化脚本驱动： 使用 Python 脚本通过 `pyserial` 发送 Shell 命令或自定义测试协议，并校验返回结果。示例：
+   ```python
+   import serial
+   ser = serial.Serial('/dev/ttyACM0', 115200)
+   ser.write(b'charger set_current 2000\n')
+   resp = ser.readline().decode()
+   assert 'current: 2000mA' in resp
+   ```
+
+3. 固件自动烧录： 结合 `west flash` 实现一键烧录与测试：
+   ```bash
+   west flash && python tests/hil/battery_test.py
+   ```
+
+Twister 硬件映射： Zephyr 的测试工具 Twister 支持硬件映射文件 (`hardware-map.yaml`)，可将测试用例自动分发到指定的真实板卡上执行：
+
+```bash
+west twister --device-testing --hardware-map map.yaml -T tests/
+```
+
+HIL 测试是发版前的必检环节——纯仿真无法暴露的时序竞态、DMA 冲突、电源域切换等问题，只有真实硬件才能捕获。建议每次固件发版标签前，至少完成一轮全量 HIL 测试。
+
+### 与持续集成（CI）结合
+
+将测试嵌入 CI 流水线是实现质量持续可控的关键。典型的 EC 固件 CI 流程如下：
+
+流程设计： 每次 Pull Request 提交后自动触发流水线——先运行 `native_sim` 单元测试（最快，分钟级）、再通过 Twister 运行集成测试、最后对目标板卡执行编译检查（确保代码能通过实际工具链编译）。
+
+GitHub Actions 示例：
+
+```yaml
+name: EC Firmware CI
+on: [pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: zephyrprojectrtos/ci:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run unit tests
+        run: |
+          west twister -T tests/ --platform native_sim
+      - name: Build for target
+        run: |
+          west build -b csce250x_evb
+```
+
+测试报告与可追溯性： Twister 支持输出 JUnit XML 格式的测试报告，可直接导入 CI 看板或测试管理平台，实现每次构建的测试结果对比和趋势分析。
+
+回归测试策略： 核心原则是"每一个 Bug 修复必须附带一个对应的测试用例"。这确保同一个问题不会出现两次，随着时间推移，测试套件自然覆盖所有已知风险点。即使某些目标板卡在 CI 中不可用，也至少应执行编译检查（`west build -b [target]`），保证代码的构建完整性。
+
+### 最佳实践与建议
+
+结合 EC 固件的特殊性（安全关键、实时性要求、外设密集），推荐以下测试实践：
+
+1. 测试与编码同步进行： 不要等到功能完成后补写测试。边写代码边写测试（TDD 或同步测试），能更早发现接口设计问题，测试本身也是对 API 设计合理性的验证。
+
+2. 每个 Bug 修复 = 一个新测试用例： 修复 Bug 后必须添加对应的回归测试，这是构建长期可靠性的最低成本策略。
+
+3. 每次提交都跑 `native_sim` 测试： 使用 `west build -b native_sim -t run` 在数秒内完成全量单元测试验证，作为 pre-commit hook 或 CI 第一道防线。
+
+4. 发版标签前运行完整 HIL 测试： 真实硬件上的 HIL 测试是发版的准入门槛，尤其要覆盖各电源状态间的转换（S0→S3→S5→S0），这些场景在仿真中极难验证。
+
+5. 关注覆盖率趋势： 启用 `CONFIG_COVERAGE=y`，使用 `west build -t coverage` 生成覆盖率报告，追踪覆盖率变化。覆盖率下降应视为 PR 审查的"红灯信号"。
+
+6. 保持测试用例独立性： 不要依赖共享全局状态或测试执行顺序。每个测试用例应该能单独运行并通过，使用 fixture 的 setup/teardown 管理状态。
+
+7. EC 特定：始终测试电源状态转换： 电源状态切换是 EC 最复杂且最危险的场景，必须在 HIL 测试中覆盖所有合法的状态转换路径。
+
+8. 善用 Twister 批量执行与报告： `west twister` 支持并行执行、平台筛选、JUnit XML 报告输出，是管理大规模测试套件的核心工具：
+
+   ```bash
+   west twister -T tests/ --platform native_sim --platform qemu_cortex_m3 \
+     --inline-logs --xml-report report.xml
+   ```
+

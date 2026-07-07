@@ -1,0 +1,212 @@
+---
+title: SMC 主机接口 (SMC Host Interface)
+---
+
+
+`app/smchost/` 是实现 EC 与主机 CPU 之间通信的核心模块，包含 24 个源文件，覆盖 ACPI 命令处理、SCI 中断管理、共享内存与电源协调。
+
+## 命令处理流程
+
+主机通过 eSPI Peripheral Channel（模拟传统 LPC I/O 端口 0x62/0x66）向 EC 发送命令。EC 端的 `smchost_acpi_handler()` 负责从 ACPI 接口接收命令字节：
+
+命令接收状态机：
+1. 主机写入 Command Port (0x66)，EC 侧检测到 IBF（Input Buffer Full）标志和 CD（Command/Data）标志为命令模式
+2. EC 读取命令字节（0x80~0x84），重置长度计数器
+3. 后续写入 Data Port (0x62)，CD 标志为数据模式，EC 逐字节累积到 `host_req[]`
+4. 当接收长度达到该命令的预期长度时（由 `smchost_req_length()` 查询），调用 `smchost_cmd_handler()` 分发
+
+ACPI 标准命令码：
+
+| 命令码 | 宏名称 | 功能 |
+|--------|--------|------|
+| 0x80 | `SMCHOST_ACPI_READ` | 从 EC 空间读取数据 |
+| 0x81 | `SMCHOST_ACPI_WRITE` | 向 EC 空间写入数据 |
+| 0x82 | `SMCHOST_ACPI_BURST_MODE` | 进入 ACPI Burst 模式（高速连续读写） |
+| 0x83 | `SMCHOST_ACPI_NORMAL_MODE` | 退出 Burst 模式 |
+| 0x84 | `SMCHOST_ACPI_QUERY` | 查询待处理事件（返回 SCI 事件码） |
+
+命令分发采用 switch-case 结构：标准 ACPI 命令分派到对应的读/写/burst 处理函数，自定义命令（如 `ACPI_CMD_EC_UPDATE`）触发厂商特定逻辑（如固件更新流程）。
+
+## SCI 中断管理
+
+SCI（System Control Interrupt）是 EC 通知主机有事件需处理的标准机制。EC 维护一个 SCI 事件队列，当 EC 检测到需要通知主机的事件时（如电池状态变化、LID 开合、热事件），将对应的 SCI 码入队并触发 eSPI Virtual Wire 上的 SCI 信号。
+
+系统定义了 40+ 个 SCI 事件码（`scicodes.h`），部分关键事件：
+
+| SCI 码 | 宏名称 | 触发条件 |
+|--------|--------|----------|
+| 0x09 | `SCI_Thermal_Event` | 温度超过告警阈值 |
+| 0x0A | `SCI_Adapter_Status` | AC 适配器插拔 |
+| 0x0B | `SCI_Battery_Status` | 电池状态变化 |
+| 0x0C | `SCI_LID_Close` | LID 合盖 |
+| 0x0D | `SCI_LID_Open` | LID 开盖 |
+| 0x10 | `SCI_PB_Press` | 电源键按下 |
+| 0x11 | `SCI_PB_Release` | 电源键释放 |
+| 0x62 | `SCI_FNLK_On` | FnLock 开启 |
+| 0x63 | `SCI_FNLK_Off` | FnLock 关闭 |
+| 0x84 | `SCI_GPU_STATE_CHANGE` | GPU 状态变化 |
+
+## 线程运行模式
+
+`smchost_thread` 支持两种运行模式，通过 `CONFIG_SMCHOST_EVENT_DRIVEN_TASK` 控制：
+
+- 事件驱动模式：线程通过 `k_sem_take(&acpi_lock, K_FOREVER)` 阻塞等待。当 eSPI ACPI 事件（IBF 触发）或按钮事件发生时，调用 `smchost_signal_request()` 释放信号量唤醒线程。线程唤醒后循环调用 `smchost_process_tasks()` 处理所有待处理操作，直到无活动后再进入阻塞。此模式功耗更低，是推荐配置。
+
+- 周期轮询模式：线程以固定周期（通过 `k_msleep(period)`）轮询 ACPI 接口状态。适用于不支持事件驱动唤醒的调试场景。
+
+## 关键事件处理
+
+LID 处理（`smchost_lid_handler()`）：开盖时设置 `Lid_Act` 标志，清除键盘禁用标志，通知子系统 LID 打开事件，启用键盘控制器，入队 SCI_LID_Open 事件，若系统在 S3 则生成唤醒信号。合盖时执行反向操作。
+
+平台复位处理（`smchost_pltrst_handler()`）：当检测到 PLT_RST 信号变化时，清除键盘状态标志，刷新 SCI 队列。若为复位动作，启动 PECI 访问延迟定时器（PECI 在启动阶段不稳定，需延迟访问）。同时管理 PLN 信号用于 M.2 SSD 复位准备。
+
+CS 低功耗处理（`smchost_cs_lp_handler()`）：处理 Modern Standby（Connected Standby）的进入和退出。进入低功耗时通知子系统并切换 OLED 状态；退出时恢复。
+
+## 共享内存窗口
+
+EC 通过 eSPI Memory Channel 将指定 SRAM 区域映射到主机内存空间。CSCE250X 支持两个共享内存窗口，通过 Kconfig 配置：
+
+- `CONFIG_CSCE250X_PERIPHERAL_ACPI_SHD_MEM_ADDRESS`：ACPI 共享内存窗口（默认 `0x2002F000`），用于 ACPI 命令/数据交换
+- `CONFIG_CSCE250X_PERIPHERAL_HOST_SHD_MEM_ADDRESS`：主机命令共享内存窗口（默认 `0x2002F100`），用于自定义主机命令
+
+主机通过访问自身的 PCI 地址空间即可读写这些 EC SRAM 区域，eSPI/LPC Controller 自动转换为 Memory Cycle 映射到 EC。
+
+## 命令接收缓冲区管理
+
+`host_req[]` 是命令接收环形缓冲区，逐字节累积主机发来的命令数据。接收状态由以下变量跟踪：
+
+| 变量 | 用途 |
+|------|------|
+| `host_req[]` | 命令数据缓冲区（最大 256 字节） |
+| `host_req_len` | 当前已接收字节数 |
+| `host_req_expected_len` | 预期接收长度（根据命令码查询） |
+| `host_req_state` | 接收状态：IDLE / RECV_CMD / RECV_DATA / COMPLETE |
+
+当 `host_req_len == host_req_expected_len` 时，接收完成，调用 `smchost_cmd_handler()` 分派到对应的命令处理函数。每处理完一条命令后缓冲区自动复位到 IDLE 状态，等待下一条命令。
+
+## OEM 自定义命令扩展
+
+除标准 ACPI 命令（0x80-0x84）外，OEM 可通过以下步骤添加自定义命令：
+
+1. 在 `smchost_acpi_command.h` 中定义新命令码（如 `ACPI_CMD_OEM_FEATURE = 0x90`）
+2. 在 `smchost_req_length()` 中注册该命令的预期数据长度
+3. 在 `smchost_cmd_handler()` 的 switch-case 中添加 case 分支
+4. 实现处理函数（如 `oem_feature_handler()`），读取 `host_req[]` 中的参数并执行操作
+
+常见 OEM 自定义命令包括固件更新触发（`ACPI_CMD_EC_UPDATE`）、工厂模式设置、OEM 诊断接口等。
+
+## eSPI Peripheral Channel 与 LPC 端口映射
+
+eSPI Peripheral Channel 通过 Memory Cycle 模拟传统 LPC I/O 端口访问。对于主机侧代码而言，仍然读写 I/O 端口 0x62/0x66，eSPI Controller 自动转换为 Peripheral Channel 事务：
+
+| LPC I/O 端口 | eSPI Peripheral 事务 | 方向 | 用途 |
+|-------------|---------------------|------|------|
+| 0x60 | KBC Data Read (OPCODE=0x04) | EC→Host | 键盘数据输出 |
+| 0x62 | ACPI Data (OPCODE=0x02) | 双向 | ACPI 数据端口 |
+| 0x64 | KBC Command/Status (OPCODE=0x04) | 双向 | 键盘命令/状态 |
+| 0x66 | ACPI Command/Status (OPCODE=0x02) | Host→EC | ACPI 命令端口（含 IBF/CD 标志） |
+| 0x80 | POST Code (OPCODE=0x06) | Host→EC | Port80 调试码写入 |
+
+这种映射对主机 OS 完全透明——OS 侧 ACPI 驱动无需修改，直接使用标准的 LPC I/O 端口访问即可。
+
+## eSPI Hub (eSPI Driver)
+
+`drivers/espi/espi_hub.c` 是 EC 与主机 PCH 之间 eSPI 总线的底层驱动封装，为上层的 SMC 主机接口、ERPMC、Port80、键盘控制器等提供统一的 eSPI 通道访问能力。
+
+## eSPI 四通道架构
+
+eSPI 协议定义了四个逻辑通道，各司其职：
+
+| 通道 | 方向 | 典型用途 | CSCE250X 实现 |
+|------|------|----------|---------------|
+| Peripheral | 双向 | ACPI 命令（0x62/0x66）、KBC 键盘、POST Code | `MAX_ACPI_HANDLERS = 5`、`MAX_PERIPH_HANDLERS = 2` |
+| Virtual Wire | 双向 | 边带信号（SLP_S3/S4/5、PLT_RST、SCI信号、SMI信号 等） | 通过 VW ISR 实时响应 |
+| OOB (Out-of-Band) | 双向 | MCTP 加密消息（ERPMC）、PCH 温度查询 | `CONFIG_ESPI_OOB_CHANNEL_RX_ASYNC` 异步接收 |
+| Flash | 从→主 | EC 访问共享 SPI Flash（通常用于系统固件更新） | `espihub_write_flash()` / `read_flash()` / `erase_flash()` |
+
+## 回调注册体系
+
+eSPI Hub 采用"注册回调"模式解耦底层 eSPI 事件与上层业务逻辑。上层模块通过注册回调函数订阅特定事件：
+
+**ACPI 处理器**（最多 5 个，通过 `espihub_add_acpi_handler()` 注册）：
+
+| 处理器类型 | 用途 |
+|-----------|------|
+| `ESPIHUB_ACPI_PUBLIC` | 标准 ACPI 命令（0x80~0x84） |
+| `ESPIHUB_ACPI_PRIVATE_0` ~ `_3` | OEM 自定义 ACPI 命令通道 |
+
+典型注册代码：
+```c
+espihub_add_acpi_handler(ESPIHUB_ACPI_PUBLIC, smchost_acpi_handler);
+```
+
+**状态与警告处理器**（通过 `espihub_add_state_handler()` / `espihub_add_warn_handler()` 注册）：
+
+| 处理器 | 触发条件 |
+|--------|----------|
+| `ESPIHUB_RESET_WARNING` | eSPI 复位警告 |
+| `ESPIHUB_PLATFORM_RESET` | 平台复位（PLTRST#） |
+| `ESPIHUB_SUSPEND_WARNING` | 挂起警告 |
+| `ESPIHUB_DNX_WARNING` | Download & Execute 模式警告 |
+| `ESPIHUB_BUS_RESET` | eSPI 总线复位完成 |
+
+**KBC 处理器**（通过 `espihub_add_kbc_handler()` 注册）：处理来自主机的键盘控制器命令（如 0xED 设置 LED、0xF2 键盘识别）。
+
+**POST Code 处理器**（通过 `espihub_add_postcode_handler()` 注册）：接收主机 BIOS 在启动阶段写入的 Port80 调试码。
+
+## Virtual Wire 信号管理
+
+Virtual Wire 是 eSPI 的核心机制，用于传输传统 LPC 边带信号。每个 VW 通过 `enum espi_vwire_signal` 编号索引，值为 0（低）或 1（高）。
+
+关键 API：
+
+```c
+// 发送/读取单个 VW
+int espihub_send_vw(enum espi_vwire_signal signal, uint8_t level);
+int espihub_retrieve_vw(enum espi_vwire_signal signal, uint8_t *level);
+
+// 等待 VW 达到期望电平（带超时，单位 100us）
+int espihub_wait_for_vwire(enum espi_vwire_signal signal, uint16_t timeout,
+                           uint8_t exp_level, bool ack_required);
+
+// GPIO + VW 联合监控（用于检测毛刺或异常退出）
+int wait_for_pin_monitor_vwire(uint32_t port_pin, uint32_t exp_sts,
+                               uint16_t timeout,
+                               enum espi_vwire_signal signal,
+                               uint8_t abort_sts);
+```
+
+这些 API 是电源序列（等待 SLP_Sx 信号）和主机通信（SCI# 触发）的底层基础。
+
+## OOB 通道
+
+OOB 通道承载 MCTP（Management Component Transport Protocol）消息，用于：
+- ERPMC 加密通信（CSME ↔ EC 的安全消息）
+- PCH 温度查询
+
+支持异步接收模式（`CONFIG_ESPI_OOB_CHANNEL_RX_ASYNC`），接收回调在中断上下文中触发，将完整 OOB 包交由上层处理：
+
+```c
+int espihub_send_oob(struct espi_oob_packet *pckt);
+int espihub_retrieve_oob(struct espi_oob_packet *pckt);
+```
+
+## eSPI 总线管理
+
+- `espihub_init()` — 初始化 eSPI 控制器，配置各通道能力（支持五档频率：20/25/33/50/66 MHz），注册总线事件回调
+- `espihub_reset_status()` — 查询 eSPI 复位状态（asserted / de-asserted）
+- `espihub_wait_for_espi_reset(exp_sts, timeout)` — 等待 eSPI 复位到位
+- `espihub_dnx_status()` — 查询 Download & Execute 模式状态
+- `espihub_boot_mode()` — 返回启动配置模式（用于判断 SPI Flash 共享策略）
+
+## 配置
+
+- `CONFIG_ESPI_OOB_CHANNEL_RX_ASYNC`：启用 OOB 通道异步接收（ERPMC 必须开启）
+- `ENABLE_ESPI_LTR`：启用 Latency Tolerance Reporting（LTR），用于电源管理优化
+- eSPI 频率：五档离散频率 20/25/33/50/66 MHz，通过 `MIN_ESPI_FREQ` / `MAX_ESPI_FREQ` 限定
+
+
+
+---
+
+

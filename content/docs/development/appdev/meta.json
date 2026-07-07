@@ -1,0 +1,13 @@
+{
+  "title": "Application Development",
+  "pages": [
+    "01_new_feature_module",
+    "02_kconfig_system",
+    "03_peripheral_driver_guide",
+    "04_task_and_event_model",
+    "05_host_communication",
+    "06_power_and_wakeup",
+    "07_system_services",
+    "08_debug_and_troubleshooting"
+  ]
+}

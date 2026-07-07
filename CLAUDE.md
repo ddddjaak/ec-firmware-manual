@@ -1,120 +1,71 @@
-# CLAUDE.md
+# CLAUDE.md — Chipsea Zephyr EC Manual
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Fumadocs (Next.js 16) 构建的 EC 固件开发手册。源文件：55+ `.mdx` 在 `content/docs/`。
 
-本文件为 Claude Code (claude.ai/code) 在本仓库中工作时提供指引。
-
-## 项目概述
-
-**Chipsea Zephyr EC Manual** — 基于 MkDocs Material 的 EC 固件开发手册。
-
-- 源文件：`docs/` 下 10 个 `.md` 文件（9 章 + 首页）
-- 构建工具：MkDocs + Material 主题
-- 部署：GitHub Actions 自动部署到 GitHub Pages
-- EC 固件源码：`EC-Zephyr/` + `IT557x_ADL_N_MRD-ec-v0.21-220914/`（已在 `.gitignore` 中排除，本地参考，不入 git）
-
-> **注意**：仓库根目录的 `AGENTS.md` 描述的是历史 Doxygen 构建流程（`Doxyfile`、`pages/` 等已不存在），当前唯一活跃的文档构建系统是 MkDocs。
-
-## 本地预览
+## 命令
 
 ```bash
-# 安装依赖
-pip install mkdocs-material
-
-# 启动开发服务器（热更新）
-mkdocs serve
-# 打开 http://127.0.0.1:8000
+npm install          # 首次
+npm run dev          # 开发 → localhost:3000/ec-firmware-manual/
+npm run build        # 验证（CI 同此命令）→ out/
+npm run build:static # 静态导出含 NEXT_STATIC_EXPORT=1
 ```
 
-**推送前必须验证**：
+推送 = 自动部署到 GitHub Pages（`.github/workflows/deploy.yml`）。
 
-```bash
-mkdocs build --clean   # 输出到 site/，无警告即为通过
-```
+## 技术栈
 
-CI 执行的也是同一命令，本地通过 ≈ CI 通过。
+- **框架**: Fumadocs v16 + Next.js 16.2 (Turbopack) + Tailwind CSS v4
+- **MDX**: `fumadocs-mdx` → `source.config.ts` → `.source/` → `lib/source.ts`
+- **高亮**: Shiki (github-light / github-dark), 支持 bash/c/python/yaml/cmake/powershell
+- **搜索**: Orama（Fumadocs 内置）
+- **主题**: Purple preset + 自定义 cyber 暗色（deep purple `#673AB7` + cyan `#00E5FF`）
 
-## 部署到 GitHub Pages
-
-**自动化**：推送 `main` 分支即可，GitHub Actions 自动构建并部署。
-
-```bash
-git add docs/
-git commit -m "更新文档"
-git push origin main
-```
-
-工作流文件：`.github/workflows/deploy.yml`
-
-**部署原理**：
-1. `push` 到 `main` 触发 GitHub Actions
-2. `pip install mkdocs-material mkdocs-minify-plugin mkdocs-glightbox` → `mkdocs build`
-3. `upload-pages-artifact` 上传 `site/`
-4. `deploy-pages` 部署到 `ddddjaak.github.io/ec-firmware-manual/`
-
-**注意**：仓库需设为 Public，Settings → Pages → Source 选 "GitHub Actions"。
-
-## 项目结构
+## 关键文件（按改动频率）
 
 ```
-docs/                              ← MkDocs 源文件
-  index.md                         ← 首页（魔幻科技感 Hero + grid cards）
-  quickstart/                      ← 快速上手（环境搭建、编译、烧录）
-  dev/                             ← 开发指南
-    architecture/                  ← 架构与配置（5 个子章节）
-    modules/                       ← 功能模块（10 个子章节）
-    appdev/                        ← 应用开发（8 个子章节）
-    debug/                         ← 调试与验证（6 个子章节）
-  ch7/                             ← 移植与定制（7 个子章节）
-  ch8/                             ← 最佳实践（4 个子章节）
-  ref/                             ← 参考手册（命令速查、术语、资源）
-  media/                           ← 文档图片
-  stylesheets/extra.css            ← 赛博暗色主题 + 首页特效
-  javascripts/extra.js             ← 自定义 JS
-mkdocs.yml                         ← MkDocs 配置
-.github/workflows/deploy.yml       ← GitHub Actions 自动部署
-EC-Zephyr/                         ← 固件源码（本地参考，不入 git）
-IT557x_ADL_N_MRD-ec-v0.21-220914/  ← ITE 参考代码（同上）
+修改文档 → content/docs/**/*.mdx + meta.json
+修改首页 → app/(home)/page.tsx
+修改样式 → app/global.css          (~490 行，.dark/:root 双模式)
+修改导航 → app/layout.config.ts
+构建配置 → next.config.ts            (basePath + trailingSlash + conditional export)
+MDX 配置 → source.config.ts          (Shiki themes/langs)
+路由页面 → app/docs/[[...slug]]/page.tsx
+预构建   → scripts/generate-params.mjs → lib/static-slugs.ts
 ```
 
-## 文档编辑
+## 文档约定
 
-- 所有 `.md` 文件是标准 Markdown + MkDocs Material 扩展语法
-- 首页使用 `grid cards` 语法展示章节卡片
-- **内部链接**使用 `.md` 文件名（如 `[引言](ch1_引言.md)`），MkDocs 会自动转换为 `.html`
-- **图片路径**相对于 `docs/`（如 `![](media/image1.png)`）
-- **YAML frontmatter**：首页 `index.md` 使用 `hide: navigation` + `hide: toc` 隐藏侧边栏和目录；其他章节不需要
-- 修改后运行 `mkdocs serve` 预览，确认无警告后运行 `mkdocs build --clean` 验证，再推送
+- **Frontmatter 必须**: `title: 文档标题`
+- **内部链接**: 绝对路径 `/docs/...`（不用相对路径）
+- **代码块语言别名**: `kconfig`→`ini`, `dts`/`devicetree`→`c`, `make`→`makefile`
+- **标题层级**: 页面模板已渲染 h1，内容标题从 `##` 起步
+- **CSS 类**: `.cyber-hero`, `.hero-title`, `.cyber-card`, `.grid-cards`, `.page-footer`, `.reading-progress`
+- **图标**: `import { Rocket } from 'lucide-react'` → `<Rocket />`
 
-### 可用的自定义 CSS 类
+## 导航结构
 
-`docs/stylesheets/extra.css` 提供了以下自定义样式，可在页面中使用：
+```
+content/docs/meta.json        → root: [quickstart, dev, ch7, ch8, ref]
+  每个子目录有 meta.json       → pages: ["index", "01_xxx", ...]
+  Fumadocs 文件系统路由        → /docs/{section}/{page}
+  index.mdx                   → /docs/{section}（章节入口，卡片网格）
+```
 
-| CSS 类 | 用途 | 使用位置 |
-|--------|------|----------|
-| `.cyber-hero` | 首页 Hero 区域（渐变光晕 + 点阵网格背景） | `index.md` |
-| `.hero-tagline` | Hero 区域副标题 | `index.md` |
-| `.grid cards` | 章节卡片网格（玻璃拟态 + 悬浮幻光） | `index.md` |
-| `.page-footer` | 首页页脚 | `index.md` |
-| `.stat-icon` | 统计卡片图标 | 按需 |
+## 边界
 
-> CSS 同时覆盖了亮色/暗色两种模式（通过 `[data-md-color-scheme="slate"]` / `[data-md-color-scheme="default"]` 选择器），修改样式时需同时考虑两套配色。
+- **禁止**: 在 MDX 中使用 `class=`（React 用 `className=`）
+- **禁止**: 相对链接（必须 `/docs/...` 绝对路径）
+- **禁止**: 内容中使用 `# ` 标题（h1 由模板提供，内容从 `## ` 起步）
+- **修改样式时**: 同时处理 `.dark` 和 `:root` 两套配色
+- **修改 `next.config.ts` 后**: 验证 `npm run dev` + `npm run build` 均正常
+- **Legacy**: `docs/` 和 `mkdocs.yml` 仅参考，勿修改
 
-## MkDocs 配置要点
+## EC 固件参考
 
-- 主题：Material，暗色模式默认启用
-- 配色：deep purple（主色）+ cyan（强调色）
-- 自定义 CSS：`docs/stylesheets/extra.css`
-- nav 目录在 `mkdocs.yml` 中手动维护
+`EC-Zephyr/`（独立仓库，已在 `.gitignore`）— 文档中代码示例来源：
+- `ecfw-zephyr/app/` — 13 功能模块
+- `ecfw-zephyr/drivers/` — 18 设备驱动
+- `ecfw-zephyr/boards/` — 板级支持包
 
-## EC 固件代码参考
-
-`EC-Zephyr/` 是一个独立的 git 仓库，文档中所有代码示例、DTS 片段、Kconfig 配置来源于此：
-
-- `EC-Zephyr/ecfw-zephyr/app/` — 13 个功能模块
-- `EC-Zephyr/ecfw-zephyr/drivers/` — 18 个设备驱动
-- `EC-Zephyr/ecfw-zephyr/boards/` — 板级支持包
-
-固件代码变更需同步更新文档中的对应章节。
-
-`IT557x_ADL_N_MRD-ec-v0.21-220914/` 是 ITE IT557x（C51 内核）的参考实现，用于 ch7 迁移指南。
+`IT557x_ADL_N_MRD-ec-v0.21-220914/` — ITE IT557x 参考实现（ch7 迁移指南用）。

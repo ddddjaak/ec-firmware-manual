@@ -1,0 +1,266 @@
+---
+title: 软件工具链安装
+---
+
+<Tabs items={['Windows', 'Linux']}>
+
+<Tab value="Windows">
+
+## Windows 平台环境搭建
+
+### 安装 Chocolatey
+
+Chocolatey 是 Windows 系统上的软件包管理器，让你能像在 Linux 中使用 apt-get 或 yum 一样，通过命令行快速安装、更新和管理各种软件。
+
+以管理员身份打开 PowerShell，先确认执行策略：
+
+```powershell
+Get-ExecutionPolicy
+```
+
+若返回 `Restricted`，执行以下命令：
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process
+```
+
+然后安装 Chocolatey：
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+```
+
+安装成功后，终端输入 `choco` 或 `choco -?` 可查阅使用说明。
+
+### 安装其他软件
+
+以管理员身份打开 cmd.exe，禁用全局确认提示：
+
+```powershell
+choco feature enable -n allowGlobalConfirmation
+```
+
+安装所需依赖项：
+
+```powershell
+choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+choco install ninja gperf python311 git dtc-msys2 wget 7zip
+```
+
+### 配置编译环境
+
+安装 West 工具：
+
+```bash
+pip install west
+```
+
+获取 Chipsea Zephyr 工程包（无需从 GitHub 克隆，直接使用提供的 SDK）。目录结构：
+
+```
+EC-ZEPHYR
+┣ .vscode
+┗ .west
+  ┗ ecfw-zephyr
+  ┗ ecfwwork
+    ┣ modules
+    ┗ zephyr_fork
+    ┗ zephyr_modules_csce250x
+```
+
+导出 Zephyr CMake 包：
+
+```bash
+west zephyr-export
+```
+
+成功日志示例：
+
+```
+Zephyr (E:/common/ec/EC-Zephyr/ecfwwork/zephyr_fork/share/zephyr-package/cmake)
+has been added to the user package registry in:
+HKEY_CURRENT_USER\Software\Kitware\CMake\Packages\Zephyr
+```
+
+### 安装 Python 依赖
+
+```bash
+pip install -r ecfwwork\zephyr_fork\scripts\requirements.txt
+```
+
+### 配置交叉编译链（Zephyr SDK）
+
+使用提供的 `zephyr-sdk-0.16.8` 包：
+
+1. 解压到 C 盘（或其他盘）
+2. 进入 `zephyr-sdk-0.16.8` 目录，双击执行 `setup.cmd`
+3. 仅安装 Host tools + 注册 Zephyr SDK CMake 包，其余选项选 N
+4. 显示 "All done" 即配置成功
+
+![](/media/image2.png)
+
+> 确认未设置 `ZEPHYR_TOOLCHAIN_VARIANT` 环境变量。Chipsea EC Zephyr 项目默认使用 Zephyr SDK 编译，编译脚本已自动忽略该变量。
+
+### 首次编译
+
+在 `ecfw-zephyr` 路径下执行：
+
+```batch
+build.bat
+```
+
+编译成功日志：
+
+![](/media/image3.png)
+
+### 烧录测试
+
+1. 安装 J-Link 开发包
+2. 导入 Chipsea 芯片开发包
+3. 打开 J-Flash，选择 CSCE250X 设备
+4. 导入 `build\ec_fw\APROM.hex`
+5. 烧录成功后，打开 J-Link RTT Viewer 即可看到 Zephyr 运行日志
+
+</Tab>
+
+<Tab value="Linux">
+
+## Linux 平台环境搭建
+
+基于 Zephyr 3.7.0 LTS，支持 Ubuntu（20.04+）、Fedora、Clear Linux 及 Arch Linux。
+
+### 系统更新与基础依赖
+
+```bash
+# Ubuntu / Debian
+sudo apt update && sudo apt upgrade
+
+# Fedora
+sudo dnf upgrade
+
+# Arch Linux
+sudo pacman -Syu
+```
+
+**Ubuntu 22.04+：**
+
+```bash
+sudo apt install --no-install-recommends git cmake ninja-build gperf \
+  ccache dfu-util device-tree-compiler wget \
+  python3-dev python3-pip python3-setuptools python3-tk python3-wheel xz-utils file \
+  make gcc gcc-multilib g++-multilib libsdl2-dev libmagic1
+```
+
+> Ubuntu < 22.04 需先添加 Kitware APT 仓库：`wget https://apt.kitware.com/kitware-archive.sh && sudo bash kitware-archive.sh`
+
+**Fedora：**
+
+```bash
+sudo dnf group install "Development Tools" "C Development Tools and Libraries"
+sudo dnf install cmake ninja-build gperf dfu-util dtc wget which \
+  python3-pip python3-tkinter xz file python3-devel SDL2-devel
+```
+
+**Arch Linux：**
+
+```bash
+sudo pacman -S git cmake ninja gperf ccache dfu-util dtc wget \
+  python-pip python-setuptools python-wheel tk xz file make
+```
+
+验证版本：`cmake --version`、`python3 --version`、`dtc --version`（要求 CMake ≥ 3.20.5、Python ≥ 3.10、DTC ≥ 1.4.6）。
+
+### Python 虚拟环境
+
+```bash
+sudo apt install python3-venv
+python3 -m venv ~/ec-zephyr-env
+source ~/ec-zephyr-env/bin/activate
+```
+
+> 每次新开终端需重新激活：`source ~/ec-zephyr-env/bin/activate`。退出使用 `deactivate`。
+
+### 获取 Chipsea Zephyr 工程包
+
+解压 Chipsea Zephyr SDK 到工作目录（如 `~/EC-Zephyr`），目录结构与 Windows 端完全相同。
+
+### 安装 West 工具
+
+```bash
+pip install west
+```
+
+### 导出 Zephyr CMake 包
+
+```bash
+cd ~/EC-Zephyr
+west zephyr-export
+```
+
+### 安装 Python 依赖
+
+```bash
+pip install -r ecfwwork/zephyr_fork/scripts/requirements.txt
+```
+
+### 配置交叉编译链（Zephyr SDK 0.16.8）
+
+```bash
+# 下载（x86_64）
+cd ~
+wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.8/zephyr-sdk-0.16.8_linux-x86_64.tar.xz
+
+# 验证完整性
+wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.8/sha256.sum | shasum --check --ignore-missing
+
+# 解压
+tar xvf zephyr-sdk-0.16.8_linux-x86_64.tar.xz
+
+# 安装
+cd zephyr-sdk-0.16.8
+./setup.sh
+
+# 安装 udev 规则（允许普通用户烧录）
+sudo cp ~/zephyr-sdk-0.16.8/sysroots/x86_64-pokysdk-linux/usr/share/openocd/contrib/60-openocd.rules /etc/udev/rules.d
+sudo udevadm control --reload
+```
+
+### 环境变量
+
+```bash
+unset ZEPHYR_TOOLCHAIN_VARIANT                                    # 清除冲突变量
+export ZEPHYR_SDK_INSTALL_DIR=/path/to/zephyr-sdk-0.16.8         # 非默认路径时设置
+```
+
+可追加到 `~/.bashrc` 或 `~/.zshrc` 持久化。
+
+### 首次编译
+
+```bash
+cd ~/EC-Zephyr/ecfw-zephyr
+bash build.bat
+```
+
+> 项目提供的 `build.bat` 为 Windows 批处理。Linux 下等价于 `west build -b <board_name> . --build-dir build/ec_fw`。
+
+### 烧录测试
+
+1. 安装 J-Link 软件包（[SEGGER 官网](https://www.segger.com/downloads/jlink/)）
+2. 安装 Chipsea 芯片开发包
+3. 启动 J-Flash 或 JLinkExe，选择 CSCE250X 设备
+4. 加载 `build/ec_fw/APROM.hex`
+5. 烧录后通过 J-Link RTT Viewer 查看运行日志
+
+### 常见问题
+
+| 问题 | 原因 | 解决方案 |
+|------|------|---------|
+| `cmake --version` 版本过低 | 系统 CMake < 3.20.5 | 添加 Kitware APT 仓库或从官网安装新版 |
+| `west: command not found` | pip 路径不在 `$PATH` | `export PATH=$HOME/.local/bin:$PATH` |
+| SDK `./setup.sh` 失败 | 缺少 32 位库 | 安装 `gcc-multilib` 和 `g++-multilib` |
+| 烧录权限不足 | 未安装 udev 规则 | 安装 `60-openocd.rules` |
+| 虚拟环境未激活 | 新终端未 source | 执行 `source ~/ec-zephyr-env/bin/activate` |
+
+</Tab>
+
+</Tabs>

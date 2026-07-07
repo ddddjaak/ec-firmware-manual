@@ -1,4 +1,4 @@
-name: Deploy MkDocs to GitHub Pages
+name: Deploy Fumadocs to GitHub Pages
 
 on:
   push:
@@ -15,12 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
-      - run: pip install mkdocs-material mkdocs-minify-plugin mkdocs-glightbox
-      - run: mkdocs build
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Generate static params
+        run: node scripts/generate-params.mjs
+
+      - name: Build static site
+        run: npm run build
+        env:
+          NEXT_STATIC_EXPORT: 1
+
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: out
+
       - uses: actions/deploy-pages@v4

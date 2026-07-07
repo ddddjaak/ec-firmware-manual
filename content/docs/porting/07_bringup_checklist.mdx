@@ -1,0 +1,81 @@
+---
+title: Zephyr 新板 Bringup 清单
+---
+
+
+本节介绍为 Zephyr EC 创建新板级的完整流程，基于 Chromium EC 上游的 Baseboard/Board 目录结构。
+
+## 目录结构
+
+Zephyr EC 采用 **Baseboard + Board** 两级目录结构：
+
+| 目录 | 内容 | 说明 |
+|------|------|------|
+| `zephyr/boards/<vendor>/<baseboard>/` | 底板定义 | 同一系列板级共享的 DTS、Kconfig、代码片段 |
+| `zephyr/boards/<vendor>/<board>/` | 单板定义 | 单个板级特有的配置和硬件描述 |
+
+Baseboard 目录中的 `baseboard.overlay` 定义底板系列共用的硬件描述，Board 目录中的 `board.overlay` 定义单板特有的硬件配置。
+
+## 关键文件
+
+| 文件 | 位置 | 用途 |
+|------|------|------|
+| `board.h` | Board 目录 | 板级配置宏定义（如 GPIO 映射、外设使能） |
+| `board.c` | Board 目录 | 板级初始化代码 |
+| `ec.tasklist` | Board 目录 | 板级启用的任务列表 |
+| `gpio.inc` | Board 目录 | GPIO 引脚定义（中断、GPIO、复用功能） |
+| `board.overlay` | Board 目录 | 板级设备树 overlay |
+| `baseboard.overlay` | Baseboard 目录 | 底板系列设备树 overlay |
+| `Kconfig` | 两处 | 板级 Kconfig 配置 |
+
+## GPIO 命名规范
+
+通用 EC 代码中的驱动依赖板级定义精确的 GPIO 信号名称。最佳实践是：
+
+1. 在 `gpio.inc` 中使用**原理图网络名称**定义 GPIO
+2. 在 `board.h` 中创建 `#define` 宏将网络名称映射到 EC 通用名称
+
+```c
+/* gpio.inc — 使用原理图网络名称 */
+GPIO_INT(EC_RST_ODL, PIN(0, 2), GPIO_INT_BOTH, signal_interrupt)
+
+/* board.h — 映射到 EC 通用名称 */
+#define GPIO_SYS_RESET_L GPIO_EC_RST_ODL
+```
+
+## ec.tasklist
+
+`ec.tasklist` 定义板级启用的任务列表。每个任务通过 `DECLARE_TASK` 宏注册：
+
+```c
+/* ec.tasklist */
+DECLARE_TASK(thermal_task)
+DECLARE_TASK(battery_task)
+DECLARE_TASK(keyboard_task)
+```
+
+## Bringup 步骤清单
+
+以下是新板 bringup 的关键步骤，按优先级排列：
+
+| 步骤 | 配置项 | 上电必需 |
+|------|--------|----------|
+| 1 | 配置 EC 芯片组（时钟、Flash、电源） | 是 |
+| 2 | 配置 AP 与 EC 通信（eSPI/LPC） | 是 |
+| 3 | 配置 AP 电源阈值和时序 | 是 |
+| 4 | 配置 GPIO 引脚映射 | 是 |
+| 5 | 配置 I2C 总线 | 是 |
+| 6 | 配置 USB-C（TCPC、PPC） | 是 |
+| 7 | 配置充电器 | 是 |
+| 8 | 配置 USB-A | 否 |
+| 9 | 配置休眠/唤醒 | 否 |
+| 10 | 配置电池 | 否 |
+| 11 | 配置 CBI（板级信息） | 否 |
+| 12 | 配置键盘 | 否 |
+| 13 | 配置 LED | 否 |
+| 14 | 配置运动传感器 | 否 |
+| 15 | 配置 BC1.2 充电检测 | 否 |
+| 16 | 配置 ADC | 否 |
+| 17 | 配置温度传感器 | 否 |
+
+> **提示**：前 7 步是上电必需的最小集，完成这些配置后 EC 应能正常启动并与 AP 建立通信。其余步骤可按需逐步添加。

@@ -1,0 +1,33 @@
+{
+  "name": "ec-firmware-manual",
+  "version": "2.0.0",
+  "description": "Chipsea Zephyr EC Firmware Development Manual — powered by Fumadocs",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "prebuild": "node scripts/generate-params.mjs && node scripts/generate-search-index.mjs",
+    "build": "next build",
+    "build:static": "set NEXT_STATIC_EXPORT=1 && next build",
+    "start": "next start",
+    "postinstall": "fumadocs-mdx"
+  },
+  "dependencies": {
+    "flexsearch": "^0.8.212",
+    "fumadocs-core": "latest",
+    "fumadocs-mdx": "latest",
+    "fumadocs-ui": "latest",
+    "lucide-react": "latest",
+    "mermaid": "^11.16.0",
+    "next": "latest",
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
+  }
+}

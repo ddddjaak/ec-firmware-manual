@@ -1,0 +1,54 @@
+---
+title: 移植与定制
+---
+
+
+将 Zephyr EC 框架移植到新的硬件平台，或为现有平台进行深度功能定制。
+
+---
+
+<div className="grid-cards">
+
+- **新平台移植流程**
+
+  移植前的准备工作、BSP 创建流程以及推荐的分阶段移植策略
+
+  [阅读](/docs/porting/01_porting_guide)
+
+- **板级初始化**
+
+  启动流程、链接脚本、时钟树、引脚控制和板级特定代码
+
+  [阅读](/docs/porting/02_board_initialization)
+
+- **设备树与驱动适配**
+
+  DTS 编写、驱动绑定启用和裁剪适配
+
+  [阅读](/docs/porting/03_devicetree_and_driver)
+
+- **功能与资源裁剪**
+
+  系统化的裁剪和优化是量产固件的必经环节
+
+  [阅读](/docs/porting/04_kconfig_and_optimization)
+
+- **新驱动开发流程**
+
+  Zephyr 驱动模型的标准化开发流程
+
+  [阅读](/docs/porting/05_new_driver_development)
+
+- **从传统 EC 平台迁移**
+
+  芯片替代场景——用 CSCE250X 替换现有的 ITE 平台
+
+  [阅读](/docs/porting/06_migration_from_legacy_ec)
+
+- **新板 Bringup 清单**
+
+  基于 Chromium EC 上游的 Baseboard/Board 目录结构
+
+  [阅读](/docs/porting/07_bringup_checklist)
+
+</div>

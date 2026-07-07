@@ -1,0 +1,90 @@
+---
+title: 常用命令速查表
+---
+
+
+本章汇总 Zephyr RTOS 与 EC 固件开发过程中常用的各类命令，分为 West 工具、Zephyr 构建、调试监控、版本控制四大类，便于日常开发时快速查阅。
+
+## West 命令
+
+West 是 Zephyr 项目的元工具，用于管理多仓库工程、构建、烧录和调试。
+
+| 命令 | 说明 | 示例 |
+|------|------|------|
+| `west init` | 初始化 Zephyr 工作空间 | `west init -m https://github.com/zephyrproject-rtos/zephyr --mr v3.6.0 zephyrproject` |
+| `west update` | 同步所有模块子仓库 | `west update` |
+| `west build` | 编译 Zephyr 应用 | `west build -b csce250x_evb app/ec-firmware` |
+| `west flash` | 烧录固件到目标板 | `west flash --runner jlink` |
+| `west debug` | 启动调试会话 | `west debug --runner jlink` |
+| `west boards` | 列出所有支持的开发板 | `west boards | grep csce250x` |
+| `west config` | 查看或设置 west 配置 | `west config build.board csce250x_evb` |
+| `west status` | 查看所有仓库工作区状态 | `west status` |
+| `west list` | 列出所有受 west 管理的仓库及其路径 | `west list` |
+| `west forall` | 在所有仓库中执行命令 | `west forall -c "git status -s"` |
+| `west topdir` | 打印工作空间顶层目录 | `west topdir` |
+| `west zephyr-export` | 导出 Zephyr 环境变量到 CMake | `west zephyr-export` |
+
+## Zephyr 构建命令
+
+以下命令涵盖构建配置、清理、报告生成和高级 CMake 选项。
+
+| 命令 | 说明 | 示例 |
+|------|------|------|
+| `west build -b BOARD` | 指定开发板编译 | `west build -b csce250x_evb` |
+| `west build -t menuconfig` | 图形化 Kconfig 配置 | `west build -b csce250x_evb -t menuconfig` |
+| `west build -t clean` | 清理构建产物 | `west build -b csce250x_evb -t clean` |
+| `west build -t ram_report` | 生成 RAM 使用报告 | `west build -b csce250x_evb -t ram_report` |
+| `west build -t rom_report` | 生成 ROM 使用报告 | `west build -b csce250x_evb -t rom_report` |
+| `west build -- -DCONF_FILE=...` | 指定自定义 Kconfig 文件 | `west build -b csce250x_evb -- -DCONF_FILE=prj_ec.conf` |
+| `cmake -DBOARD=...` | 直接调用 CMake 配置 | `cmake -DBOARD=csce250x_evb -B build .` |
+| `ninja -C build` | 使用 Ninja 增量编译 | `ninja -C build` |
+| `ninja -C build -j8` | 指定并行编译任务数 | `ninja -C build -j8` |
+| `west build -t flash` | 编译后自动烧录 | `west build -b csce250x_evb -t flash` |
+| `west build -t guiconfig` | 图形化 Kconfig 配置 (GUI) | `west build -b csce250x_evb -t guiconfig` |
+| `west build -t hardenconfig` | 生成最小化 .config (去除无效选项) | `west build -b csce250x_evb -t hardenconfig` |
+| `west build -p` | 纯净构建 (先清理再编译) | `west build -b csce250x_evb -p always` |
+| `west build -- -DOVERLAY_CONFIG=...` | 叠加额外 Kconfig 片段 | `west build -b csce250x_evb -- -DOVERLAY_CONFIG=debug.conf` |
+| `west build -- -DDTC_OVERLAY_FILE=...` | 叠加 Devicetree 覆盖文件 | `west build -b csce250x_evb -- -DDTC_OVERLAY_FILE=ec.overlay` |
+| `west build -- -DCMAKE_BUILD_TYPE=...` | 指定编译类型 | `west build -b csce250x_evb -- -DCMAKE_BUILD_TYPE=Debug` |
+
+## 调试与监控命令
+
+固件开发与调试中常用的调试器和串口终端命令。
+
+| 命令 | 说明 | 示例 |
+|------|------|------|
+| `west debug` | 通过 west 启动 GDB 调试 | `west debug --runner jlink` |
+| `west attach` | 附加到运行中的目标板 | `west attach --runner jlink` |
+| `JLinkExe` | J-Link 命令行调试器 | `JLinkExe -device CSCE250X -if SWD -speed 4000` |
+| `openocd` | OpenOCD 调试服务器 | `openocd -f interface/jlink.cfg -f target/csce250x.cfg` |
+| `minicom` | 串口终端工具 | `minicom -D /dev/ttyUSB0 -b 115200` |
+| `screen` | 通用终端多路复用 | `screen /dev/ttyUSB0 115200` |
+| `JLinkSWOViewer` | J-Link SWO 输出查看器 | `JLinkSWOViewer -device CSCE250X -speed 4000` |
+| `JLinkRTTClient` | J-Link RTT 实时终端 | `JLinkRTTClient` |
+| `arm-none-eabi-gdb` | ARM GDB 直接调试 | `arm-none-eabi-gdb build/zephyr/zephyr.elf -ex "target remote :2331"` |
+| `arm-none-eabi-objdump` | 反汇编 ELF 文件 | `arm-none-eabi-objdump -d build/zephyr/zephyr.elf` |
+| `arm-none-eabi-nm` | 查看 ELF 符号表 | `arm-none-eabi-nm -S --size-sort build/zephyr/zephyr.elf` |
+| `arm-none-eabi-size` | 查看段大小统计 | `arm-none-eabi-size build/zephyr/zephyr.elf` |
+| `pyocd commander` | pyOCD 命令行调试工具 | `pyocd commander --target csce250x` |
+
+## 版本控制与工程管理
+
+日常开发中使用的 Git 命令速查。
+
+| 命令 | 说明 | 示例 |
+|------|------|------|
+| `git log --oneline` | 查看单行提交历史 | `git log --oneline -20` |
+| `git diff` | 查看未暂存的改动 | `git diff -- ecfw-zephyr/` |
+| `git checkout -b BRANCH` | 创建并切换到新分支 | `git checkout -b feature/ec-espi-driver` |
+| `git rebase` | 变基到目标分支之上 | `git rebase upstream/main` |
+| `west status` | 查看所有仓库工作空间状态 | `west status` |
+| `git log --graph --oneline --all` | 可视化提交历史 | `git log --graph --oneline --all -20` |
+| `git remote -v` | 查看远程仓库地址 | `git remote -v` |
+| `git stash` | 暂存当前工作区改动 | `git stash push -m "WIP: espi driver"` |
+| `git stash pop` | 恢复暂存的改动 | `git stash pop` |
+| `git cherry-pick` | 摘取特定提交到当前分支 | `git cherry-pick abc1234` |
+| `git bisect` | 二分法定位引入问题的提交 | `git bisect start; git bisect bad; git bisect good v3.5.0` |
+| `west manifest --freeze` | 导出当前所有仓库的精确版本 | `west manifest --freeze > manifest-frozen.yml` |
+
+---
+

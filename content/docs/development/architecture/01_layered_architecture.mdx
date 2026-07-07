@@ -1,0 +1,83 @@
+---
+title: 架构分层模型
+---
+
+开发包采用四层分层设计：
+
+<MermaidChart
+  chart={`graph TB
+  subgraph app[" 应用层 Application "]
+    direction LR
+    A1["电源管理"] --- A2["键盘控制"] --- A3["热管理"]
+    A4["电池充电"] --- A5["PD 管理"] --- A6["外设管理"]
+    A7["主机接口"] --- A8["调试"]
+  end
+
+  subgraph svc[" 服务层 Services "]
+    direction LR
+    B1["任务调度"] --- B2["消息队列"] --- B3["事件通知"]
+    B4["日志框架"] --- B5["OTA 升级"]
+  end
+
+  subgraph drv[" 驱动层 Drivers "]
+    direction LR
+    C1["GPIO / I2C / SPI / UART"] --- C2["ADC / PWM"]
+    C3["KSCAN / eSPI / PECI"] --- C4["Fan / PS/2 / USB"]
+    C5["Charger / Timer / RTC"] --- C6["Power Seq / LED"]
+  end
+
+  subgraph hw[" 硬件层 Hardware "]
+    D1["CSCE250X MCU (ARM Cortex-M33)"]
+  end
+
+  app --> svc
+  svc --> drv
+  drv --> hw
+
+  style app fill:#d1c4e9,stroke:#7c4dff,color:#1a0033,stroke-width:2px
+  style svc fill:#b39ddb,stroke:#651fff,color:#1a0033,stroke-width:2px
+  style drv fill:#9575cd,stroke:#7c4dff,color:#1a0033,stroke-width:2px
+  style hw fill:#7e57c2,stroke:#651fff,color:#fff,stroke-width:2px
+`}
+  chartDark={`graph TB
+  subgraph app[" 应用层 Application "]
+    direction LR
+    A1["电源管理"] --- A2["键盘控制"] --- A3["热管理"]
+    A4["电池充电"] --- A5["PD 管理"] --- A6["外设管理"]
+    A7["主机接口"] --- A8["调试"]
+  end
+
+  subgraph svc[" 服务层 Services "]
+    direction LR
+    B1["任务调度"] --- B2["消息队列"] --- B3["事件通知"]
+    B4["日志框架"] --- B5["OTA 升级"]
+  end
+
+  subgraph drv[" 驱动层 Drivers "]
+    direction LR
+    C1["GPIO / I2C / SPI / UART"] --- C2["ADC / PWM"]
+    C3["KSCAN / eSPI / PECI"] --- C4["Fan / PS/2 / USB"]
+    C5["Charger / Timer / RTC"] --- C6["Power Seq / LED"]
+  end
+
+  subgraph hw[" 硬件层 Hardware "]
+    D1["CSCE250X MCU (ARM Cortex-M33)"]
+  end
+
+  app --> svc
+  svc --> drv
+  drv --> hw
+
+  style app fill:#673ab7,stroke:#b388ff,color:#fff,stroke-width:2px
+  style svc fill:#4527a0,stroke:#b388ff,color:#fff,stroke-width:2px
+  style drv fill:#311b92,stroke:#7c4dff,color:#e0e0f0,stroke-width:2px
+  style hw fill:#1a0033,stroke:#673ab7,color:#b388ff,stroke-width:2px
+`}
+/>
+
+- **应用层**：实现 EC 业务逻辑，包含电源管理、键盘主机接口、热管理、电池/充电、PD 管理、外设管理、调试等 13 个子模块
+- **服务层**：基于 Zephyr 内核封装的任务调度、消息系统、日志框架和 OTA 升级机制
+- **驱动层**：基于 Zephyr 设备驱动模型，对 CSCE250X 片上外设进行抽象封装，涵盖通用接口驱动（GPIO、I2C、SPI、USB 等）和 EC 专用驱动（键盘扫描、风扇、eSPI、PECI 等），共 18 个模块
+- **硬件层**：CSCE250X 芯片本身，含 ARM Cortex-M33 内核及片上外设
+
+> 各模块的详细功能与使用方法见 [固件功能模块说明](/docs/development/modules/01_system_infrastructure)。

@@ -1,0 +1,15 @@
+{
+  "title": "Functional Modules",
+  "pages": [
+    "01_system_infrastructure",
+    "02_host_communication",
+    "03_power_management",
+    "04_keyboard_input",
+    "05_battery_charging",
+    "06_thermal_management",
+    "07_usb_and_pd",
+    "08_security_and_firmware_update",
+    "09_peripherals_and_storage",
+    "10_debug_and_gpio"
+  ]
+}

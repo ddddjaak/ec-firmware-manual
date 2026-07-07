@@ -17,6 +17,20 @@ Thumbs.db
 EC-Zephyr/
 IT557x_ADL_N_MRD-ec-v0.21-220914/
 
-# Sensitive
+# Fumadocs / Next.js
+node_modules/
+.next/
+out/
+.npmrc
+
+# Generated search index
+public/api/
+
+# Fumadocs generated source
+.source/
+
+# Next.js types (auto-generated)
+next-env.d.ts
+
+# Claude Code
 .claude/
-.sisyphus/

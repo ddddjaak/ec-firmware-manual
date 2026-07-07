@@ -1,0 +1,159 @@
+---
+title: 外设驱动使用指南
+---
+
+
+本节以代码片段形式展示 EC 开发中最常用的外设驱动模式。所有驱动均基于 Zephyr 设备树绑定硬件资源，通过 `DEVICE_DT_GET()` 获取设备实例。
+
+## GPIO
+
+设备树定义（在板级 `.dts` 或 overlay 中）：
+
+```
+led0: led_0 {
+    gpios = <&gpioa 5 GPIO_ACTIVE_HIGH>;
+    label = "LED0";
+};
+```
+
+驱动使用：
+
+```c
+const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(DT_NODELABEL(led0), gpios);
+
+void main(void)
+{
+    gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
+    while (1) {
+        gpio_pin_toggle_dt(&led);
+        k_msleep(500);
+    }
+}
+```
+
+中断回调配置——EC 中最常用的外设事件响应模式：
+
+```c
+static void button_pressed(const struct device *dev,
+                           struct gpio_callback *cb,
+                           uint32_t pins)
+{
+    printk("Button pressed!\n");
+}
+
+GPIO_DT_DEFINE(button, gpios);
+
+void init_button(void)
+{
+    gpio_pin_configure_dt(&button, GPIO_INPUT);
+    gpio_pin_interrupt_configure_dt(&button, GPIO_INT_EDGE_TO_ACTIVE);
+    gpio_add_callback(button.port, &button_cb_data);
+}
+```
+
+## I2C / SPI / UART
+
+I2C 示例——常用于电池、Charger、传感器通信：
+
+```
+&i2c0 {
+    status = "okay";
+    clock-frequency = <I2C_BITRATE_FAST>;
+};
+```
+
+```c
+const struct device *i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+uint8_t data = 0;
+i2c_write_read(i2c_dev, SENSOR_ADDR, &reg, 1, &data, 1);
+```
+
+SPI 示例：
+
+```c
+struct spi_config spi_cfg = {
+    .frequency = 8000000,
+    .operation = SPI_WORD_SET(8) | SPI_TRANSFER_MSB,
+};
+spi_transceive(spi_dev, &spi_cfg, &tx_bufs, &rx_bufs);
+```
+
+UART 示例：
+
+```c
+const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart0));
+uart_poll_out(uart_dev, 'A');
+```
+
+## ADC
+
+ADC 用于读取模拟传感器（电池电压、温度热敏电阻、电流检测）。DTS 中使能 ADC 节点：
+
+```dts
+&adc0 {
+    status = "okay";
+};
+```
+
+应用代码通过 `adc_sequence` 描述采样参数：
+
+```c
+#include <zephyr/drivers/adc.h>
+
+static const struct device *adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc0));
+int16_t sample;
+
+struct adc_sequence seq = {
+    .channels = BIT(0),
+    .buffer = &sample,
+    .buffer_size = sizeof(sample),
+    .resolution = 12,
+};
+
+int ret = adc_read(adc_dev, &seq);
+if (ret == 0) {
+    /* sample contains 12-bit ADC value */
+}
+```
+
+使用前需在 `prj.conf` 中启用 `CONFIG_ADC=y`。
+
+## PWM
+
+PWM 用于风扇转速调节、背光亮度控制和 LED 呼吸灯。使用 `PWM_DT_SPEC_GET()` 从 DTS 获取设备：
+
+```c
+#include <zephyr/drivers/pwm.h>
+
+static const struct pwm_dt_spec fan_pwm = PWM_DT_SPEC_GET(DT_NODELABEL(pwm0));
+
+/* 25kHz周期，50%占空比（12.5kHz脉宽） */
+int ret = pwm_set_dt(&fan_pwm, PWM_HZ(25000), PWM_HZ(12500));
+```
+
+使用前需在 `prj.conf` 中启用 `CONFIG_PWM=y`。
+
+## pinctrl 引脚复用
+
+Zephyr 通过 pinctrl 系统解耦引脚配置与驱动代码。DTS 中声明引脚功能：
+
+```dts
+&pinctrl {
+    uart0_default: uart0_default {
+        group1 {
+            pinmux = <UART0_TX_PA0>, <UART0_RX_PA1>;
+        };
+    };
+};
+
+&uart0 {
+    pinctrl-0 = <&uart0_default>;
+    pinctrl-names = "default";
+    status = "okay";
+};
+```
+
+整体数据流为：DTS pinctrl 节点 → Zephyr pinctrl 驱动解析 → HAL 写寄存器 → 引脚模式生效。开发者只需在 DTS 中声明功能需求，无需关心寄存器地址和位偏移。
+
+> Zephyr 设备驱动模型（struct device、驱动注册级别、DEVICE_DT_DEFINE 宏等）的详细原理请参考 [Zephyr 官方设备驱动文档](https://docs.zephyrproject.org/latest/kernel/drivers/index.html)。EC 开发中日常使用的就是上述 API 模式，掌握这些即可应对绝大多数场景。
+

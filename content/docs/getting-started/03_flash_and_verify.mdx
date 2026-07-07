@@ -1,0 +1,89 @@
+---
+title: 构建、烧录与验证
+---
+
+## 构建、烧录与验证
+
+从编译到烧录再到功能验证的完整流程——每一步都是确定性的。
+
+<Steps>
+
+<Step>
+
+### 编译固件
+
+在 `ecfw-zephyr` 路径下执行构建：
+
+```bash
+# 完整构建
+west build -b csce250x_evb app/ -p
+
+# 仅构建指定配置
+west build -b csce250x_evb app/ -- -DCONFIG_LOG=y
+
+# 使用额外覆盖配置
+west build -b csce250x_evb app/ -- -DOVERLAY_CONFIG=release.conf
+```
+
+编译零警告零错误即通过。产物生成在 `build/ec_fw/` 目录。
+
+</Step>
+
+<Step>
+
+### 分析资源占用
+
+建议每次功能改动后运行资源报告，建立使用基线：
+
+```bash
+# RAM 占用（栈、堆、BSS）
+west build -t ram_report
+
+# Flash 占用（.text、.rodata、.data）
+west build -t rom_report
+```
+
+对比改动前后的增量，避免未经审视的资源增长。
+
+</Step>
+
+<Step>
+
+### 烧录固件
+
+1. 安装 J-Link 开发包 + Chipsea 芯片开发包
+2. 打开 J-Flash，选择 **CSCE250X** 设备
+3. 导入 `build/ec_fw/APROM.hex`
+4. 点击烧录，等待完成
+5. 打开 J-Link RTT Viewer 查看 Zephyr 启动日志
+
+</Step>
+
+<Step>
+
+### 验证功能
+
+以下以 fuel gauge 模块为例的验证清单：
+
+| 测试场景 | 验收标准 |
+|---------|---------|
+| 编译通过 | `west build` 零警告零错误 |
+| 功能正确 | 满电（4.2V）→ 100%，低电（3.3V）→ ~5% |
+| 异常处理 | ADC 读取失败返回 `-EIO`，不崩溃 |
+| 内存影响 | `ram_report` / `rom_report` 增量在预期范围 |
+| 长时间稳定性 | 100K 次循环调用无内存泄漏，栈水印无变化 |
+| 电源状态 | S0 正常运行，S3 停止采样，S5 恢复后状态正确 |
+| 看门狗 | 长时间运行无 WDT 误触发 |
+
+在 EVB 上烧录后，通过 Shell 命令调用模块接口并观察返回值。监控命令：
+
+```bash
+kernel stacks    # 确认栈无溢出
+kernel heap      # 确认无内存泄漏
+```
+
+> 调试与验证的完整方法请参考 [调试与验证](/docs/development/debug/01_logging_and_debug) 章节。
+
+</Step>
+
+</Steps>

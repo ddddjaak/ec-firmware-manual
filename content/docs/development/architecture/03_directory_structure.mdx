@@ -1,0 +1,69 @@
+---
+title: 开发包目录结构
+---
+
+整个开发环境由三个工程目录组成，其关系如下：
+
+<Files>
+  <Folder name="工作区根目录" defaultOpen>
+    <Folder name="ecfw-zephyr" defaultOpen>
+      <File name="app/ — 应用层（13 个功能子模块）" />
+      <File name="boards/ — 板级支持包（DTS、pinmux、时钟）" />
+      <File name="drivers/ — 外设驱动（18 个驱动模块）" />
+      <File name="include/ — 公共头文件与 API 声明" />
+      <File name="lib/ — 通用库（算法、协议栈）" />
+      <File name="linker/ — 链接脚本" />
+      <File name="misc/ — 任务管理、Flash 头部、软 Strap" />
+      <File name="samples/ — 29 个 Demo 工程" />
+      <File name="scripts/ — 构建、打包、下载脚本" />
+      <File name="tools/ — 固件打包 + 更新工具" />
+      <File name="prj.conf — 工程主配置" />
+      <File name="Kconfig — 配置菜单入口" />
+      <File name="west.yml — 依赖管理" />
+      <File name="CMakeLists.txt" />
+    </Folder>
+    <Folder name="ecfwwork" defaultOpen>
+      <Folder name="zephyr_fork" defaultOpen>
+        <File name="Zephyr 内核源码（只读，勿改）" />
+      </Folder>
+      <Folder name="modules" defaultOpen>
+        <File name="Zephyr 官方模块（crypto、fs、cmsis）" />
+      </Folder>
+      <Folder name="zephyr_modules_csce250x" defaultOpen>
+        <File name="Chipsea SDK — BSP、HAL、SoC" />
+      </Folder>
+    </Folder>
+  </Folder>
+</Files>
+
+## ecfw-zephyr —— 主工程
+
+日常开发的主要工作目录：
+
+<Files>
+  <Folder name="ecfw-zephyr" defaultOpen>
+    <File name="app/ — 业务逻辑层，移植或开发新功能的主要扩展点" />
+    <File name="drivers/ — 外设驱动封装，新增外设驱动时在此开发" />
+    <File name="boards/ — 板级硬件描述（DTS），适配新板卡时修改" />
+    <File name="prj.conf — 功能裁剪与编译选项，最常修改的文件" />
+  </Folder>
+</Files>
+
+| 关键目录 | 用途 |
+|----------|------|
+| `app/` | 业务逻辑层，移植或开发新功能的主要扩展点 |
+| `drivers/` | 外设驱动封装，需新增外设驱动时在此开发 |
+| `boards/` | 板级硬件描述（DTS），适配新板卡时修改 |
+| `prj.conf` | 功能裁剪与编译选项，定制固件时最常修改 |
+
+## ecfwwork —— 内核与 SDK
+
+该路径下的代码由厂家提供，一般无须改动：
+
+- `zephyr_fork/`：Zephyr 内核源码，提供 RTOS 内核、驱动框架、子系统、构建系统。
+- `modules/`：Zephyr 官方模块精简版（crypto、debug、fs、cmsis）。
+- `zephyr_modules_csce250x/`：Chipsea 芯片 SDK，以独立模块形式存在，不侵入 Zephyr 源码：
+  - `boards/` — 开发板定义（DTS、pinmux、Kconfig）；
+  - `drivers/` — 25 个片上外设驱动（GPIO、I2C、SPI、eSPI、PECI 等）；
+  - `hal/` — 芯片抽象层（CMSIS、标准外设库、ROM 库）；
+  - `soc/` — SoC 初始化与配置代码。

@@ -1,0 +1,129 @@
+---
+title: 运行所有测试
+---
+
+## 测试框架
+
+Zephyr 提供了多层次的测试体系，从单元测试到集成测试，帮助开发者在开发阶段尽早发现和修复缺陷。
+
+### Zephyr 测试框架（ztest）
+
+`ztest` 是 Zephyr 内置的测试框架，用于编写和运行集成测试。测试用例运行在真实硬件或仿真平台上（`native_sim`、QEMU）。
+
+#### 基本结构
+
+```c
+#include <zephyr/ztest.h>
+
+ZTEST_SUITE(my_suite, NULL, NULL, NULL, NULL, NULL);
+
+ZTEST(my_suite, test_basic)
+{
+    zassert_equal(1 + 1, 2, "Math is broken");
+}
+
+ZTEST(my_suite, test_with_fixture)
+{
+    zassert_not_null(data, "Expected data");
+}
+```
+
+#### 断言宏
+
+| 宏 | 用途 |
+|------|------|
+| `zassert_equal(a, b, msg)` | 断言相等 |
+| `zassert_not_equal(a, b, msg)` | 断言不等 |
+| `zassert_true(cond, msg)` | 断言为真 |
+| `zassert_is_null(ptr, msg)` | 断言指针为空 |
+| `zassert_mem_equal(a, b, len, msg)` | 断言内存块相等 |
+
+#### testcase.yaml 配置
+
+每个测试目录包含 `testcase.yaml`，定义测试元数据和过滤规则：
+
+```yaml
+tests:
+  drivers.gpio.1pin:
+    tags: drivers gpio
+    filter: dt_label_with_parent_compat("TEST_GPIO", "gpio-leds")
+    depends_on: gpio
+    platform_allow: nrf52840dk_nrf52840
+    integration_platforms:
+      - native_sim
+```
+
+| 字段 | 用途 |
+|------|------|
+| `tags` | 标签，用于过滤测试集 |
+| `filter` | 设备树过滤条件 |
+| `depends_on` | 依赖的硬件特性 |
+| `platform_allow` | 允许运行的平台白名单 |
+| `integration_platforms` | CI 集成测试平台 |
+
+### Twister 测试运行器
+
+Twister 是 Zephyr 的高级测试运行器，支持批量执行、过滤和生成报告：
+
+```bash
+## 运行所有测试
+./zephyr/scripts/twister -T zephyr/tests/
+
+## 运行特定标签的测试
+./zephyr/scripts/twister -T zephyr/tests/drivers/gpio -t gpio
+
+## 在 native_sim 上运行
+./zephyr/scripts/twister -p native_sim -T zephyr/tests/kernel
+
+## 生成 JSON 报告
+./zephyr/scripts/twister -T zephyr/tests/ --json-report
+
+## 仅构建不运行
+./zephyr/scripts/twister -T zephyr/tests/ --build-only
+```
+
+### 单元测试（Host-Based）
+
+Chromium EC 的单元测试使用 CMocka 框架，运行在主机上（`native_posix`），无需真实硬件：
+
+```bash
+## 编译并运行单个测试
+make BOARD=native_posix run-host-test-name
+
+## 编译并运行所有单元测试
+make BOARD=native_posix run-host-tests
+```
+
+单元测试的关键特性：
+
+- **Mock 机制**：通过 CMocka 模拟硬件行为，测试软件逻辑
+- **隔离性**：每个测试独立运行，不依赖其他测试的状态
+- **快速反馈**：在主机上运行，无需烧录硬件
+
+### 代码覆盖率
+
+代码覆盖率工具帮助识别未被测试覆盖的代码路径：
+
+```bash
+## 构建带覆盖率的测试
+make BOARD=native_posix coverage
+
+## 生成 HTML 报告
+lcov --capture --directory build --output-file coverage.info
+genhtml coverage.info --output-directory coverage-report
+```
+
+覆盖率指标：
+
+| 指标 | 说明 |
+|------|------|
+| **行覆盖率** | 被执行的代码行百分比 |
+| **分支覆盖率** | 被执行的分支（if/else）百分比 |
+| **函数覆盖率** | 被调用的函数百分比 |
+
+### 测试最佳实践
+
+1.  **新功能必须附带测试**：每个新功能模块应包含对应的测试用例
+2.  **Bug 修复先写复现测试**：修复 Bug 前先编写能复现问题的测试，确保修复有效
+3.  **CI 集成**：将测试集成到 CI/CD 流水线，每次提交自动运行
+4.  **覆盖率目标**：核心模块目标 80%+ 行覆盖率

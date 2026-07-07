@@ -1,0 +1,1 @@
+{"title":"Porting & Customization","pages":["index","01_porting_guide","02_board_initialization","03_devicetree_and_driver","04_kconfig_and_optimization","05_new_driver_development","06_migration_from_legacy_ec","07_bringup_checklist"]}

@@ -1,0 +1,10 @@
+{
+  "title": "Architecture & Configuration",
+  "pages": [
+    "01_layered_architecture",
+    "02_vs_legacy_ec",
+    "03_directory_structure",
+    "04_source_mapping",
+    "05_configuration"
+  ]
+}

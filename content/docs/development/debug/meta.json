@@ -1,0 +1,11 @@
+{
+  "title": "Debugging & Verification",
+  "pages": [
+    "01_logging_and_debug",
+    "02_unit_test_and_simulation",
+    "03_exception_and_crash_analysis",
+    "04_functional_verification",
+    "05_faq_and_troubleshooting",
+    "06_test_framework"
+  ]
+}
