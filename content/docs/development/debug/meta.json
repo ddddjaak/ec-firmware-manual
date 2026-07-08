@@ -1,5 +1,5 @@
 {
-  "title": "Debugging & Verification",
+  "title": "调试与验证",
   "pages": [
     "01_logging_and_debug",
     "02_unit_test_and_simulation",

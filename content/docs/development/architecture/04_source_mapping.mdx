@@ -1,45 +1,86 @@
 ---
-title: Legacy EC 与 Zephyr EC 源码对照
+title: 功能模块与源码对照
 ---
 
+快速查找——每个功能模块对应的源码位置。从应用层到驱动层，按需定位。
 
-Chromium EC 项目在 2021 年从 Legacy EC（裸机 RTOS）迁移到 Zephyr RTOS，两套代码在上游仓库中并行存在。了解两者的目录对应关系有助于阅读上游文档和参考代码。
+## 应用层模块（`app/`）
 
-## 共享目录（Legacy 与 Zephyr 共用）
+13 个功能模块，每个模块自成一个子目录：
 
-| 目录 | 职责 |
-|------|------|
-| `common/` | EC 核心逻辑——系统、主机命令、芯片无关的功能代码（电源管理、LED、充电策略等） |
-| `driver/` | EC 硬件无关驱动——键盘矩阵扫描、温度传感器、BC1.2 等 |
-| `include/` | 头文件——EC 代码使用的宏、类型、函数声明 |
-| `baseboard/` | 底板系列定义——`baseboard.h/c`、`build.mk`、`usb_pd_policy.c` |
-| `board/` | 单板定义——`board.h/c`、`build.mk`、`gpio.inc`、`ec.tasklist` |
-| `chip/` | 芯片系列代码——芯片寄存器定义、芯片级驱动、初始化和中断处理 |
-| `core/` | 核心运行时——启动、任务调度、中断处理、主机命令调度器、闪存更新 |
-| `util/` | 独立工具——位操作、字节序、数学工具、控制台历史等 |
+| 模块 | 路径 | 功能 |
+|------|------|------|
+| 系统基础 | `app/system/` | 系统初始化、版本管理、运行状态 |
+| 电源管理 | `app/power/` | 电源状态机、休眠唤醒、电源策略 |
+| 电池充放电 | `app/charger/` | 充电曲线、电池保护、电量计算 |
+| 热管理 | `app/thermal/` | 温度采集、风扇控制、过热保护 |
+| 键盘扫描 | `app/keyboard/` | 键盘矩阵扫描、热键、Fn 组合键 |
+| LED 控制 | `app/led/` | 充电指示灯、电源灯、键盘背光 |
+| USB Type-C / PD | `app/usbc/` | PD 协议栈、角色切换、Alt Mode |
+| 主机通信 | `app/host_if/` | Host Command、ACPI EC Space、SCI/SMI |
+| 传感器 | `app/sensors/` | 加速度计、陀螺仪、光感、霍尔 |
+| 固件升级 | `app/fw_update/` | OTA、MCUboot、双区切换 |
+| 调试接口 | `app/debug/` | Shell 命令、RTT 日志、诊断转储 |
+| 安全 | `app/security/` | Secure Boot、写保护、固件签名 |
+| 扩展功能 | `app/misc/` | PWM 控制、GPIO 扩展、用户自定义 |
 
-## Zephyr 专属目录
+## 驱动层模块（`drivers/`）
 
-| 目录 | 职责 |
-|------|------|
-| `zephyr/` | Zephyr shim 层——适配 Zephyr 框架的代码（board 目录、drivers、subsys、include 等） |
-| `zephyr/boards/` | 硬件定义——board.h、板级 Kconfig、DTS overlay、devicetree 目录、代码片段、扇区布局 |
-| `zephyr/drivers/` | 常用驱动——非芯片相关的 EC 驱动、信号驱动、IO 展开、用于模拟和测试的 fake 驱动 |
-| `zephyr/subsys/` | 子系统——console、charger、thermal、USBC、firmware、debug 等 |
-| `zephyr/test/` | 单元测试——基于 CMocka 的 host-based（native_posix）测试，通过 twister 运行 |
-| `zephyr/tests/` | 集成测试——基于 Zephyr ztest 框架的板级测试 |
-| `zephyr/lib/` | 通用库——thermal、math 工具、EC 信号模拟、getter/setter |
-| `zephyr/include/` | Zephyr 专属头文件 |
+18 个外设驱动，按硬件接口分类：
 
-## Legacy EC 不再使用的目录
+### 通信总线
 
-| 目录 | 说明 |
-|------|------|
-| `arch/` | CPU 架构代码，Zephyr 由 Zephyr 自身处理 |
-| `core/` | Legacy 核心运行时，Zephyr 替代 |
-| `chip/` | Legacy 芯片驱动，Zephyr 由 `chip/` + `soc/` + `dts/` 替代 |
-| `common/` | Legacy 共享代码，Zephyr 由 `common/` + `zephyr/subsys/` 替代 |
-| `driver/` | Legacy 共享驱动，Zephyr 由 `driver/` + `zephyr/drivers/` 替代 |
-| `include/` | Legacy 头文件，Zephyr 由 `include/` + `zephyr/include/` 替代 |
-| `util/` | Legacy 独立工具，Zephyr 由 `util/` + `zephyr/lib/` 替代 |
+| 驱动 | 路径 | 挂载总线 |
+|------|------|----------|
+| I2C 主控制器 | `drivers/i2c/` | I2C |
+| SPI 主控制器 | `drivers/spi/` | SPI |
+| eSPI 从控制器 | `drivers/espi/` | eSPI |
+| PECI 主机 | `drivers/peci/` | PECI |
+| UART | `drivers/uart/` | UART |
 
+### 电源与模拟
+
+| 驱动 | 路径 | 功能 |
+|------|------|------|
+| Fuel Gauge | `drivers/fuel_gauge/` | 电量计（I2C） |
+| Charger IC | `drivers/charger/` | 充电芯片（I2C） |
+| ADC | `drivers/adc/` | 模数转换 |
+| PWM | `drivers/pwm/` | 脉宽调制（风扇、背光） |
+
+### 输入与控制
+
+| 驱动 | 路径 | 功能 |
+|------|------|------|
+| 键盘矩阵 | `drivers/kbd_matrix/` | 键盘扫描控制器 |
+| GPIO 扩展 | `drivers/gpio_expander/` | IO 扩展芯片 |
+| 温度传感器 | `drivers/temp_sensor/` | 热敏电阻 / 数字温度计 |
+
+### USB 与存储
+
+| 驱动 | 路径 | 功能 |
+|------|------|------|
+| TCPC | `drivers/tcpc/` | Type-C 端口控制器 |
+| BC1.2 检测 | `drivers/bc12/` | 充电端口识别 |
+| SPI Flash | `drivers/spi_flash/` | 外部 Flash 存储 |
+
+### 系统与安全
+
+| 驱动 | 路径 | 功能 |
+|------|------|------|
+| 看门狗 | `drivers/wdt/` | 硬件看门狗定时器 |
+| RTC | `drivers/rtc/` | 实时时钟 |
+| CRC | `drivers/crc/` | 硬件 CRC 校验 |
+
+## 快速查找
+
+| 你想找... | 去这里 |
+|-----------|--------|
+| 电池充放电逻辑 | `app/charger/` |
+| PD 协议协商 | `app/usbc/` |
+| 键盘扫描矩阵配置 | `drivers/kbd_matrix/` |
+| 风扇 PWM 调速 | `app/thermal/` + `drivers/pwm/` |
+| Host Command 处理 | `app/host_if/` |
+| ACPI EC Space 定义 | `app/host_if/` |
+| 固件 OTA 升级流程 | `app/fw_update/` |
+| Shell 命令注册 | `app/debug/` |
+| DTS 引脚配置 | `boards/<board>/` |

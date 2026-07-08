@@ -1,1 +1,1 @@
-{"title":"Best Practices","pages":["index","01_coding_style_and_commits","02_power_optimization","03_security_hardening","04_integration_and_collaboration"]}
+{"title":"最佳实践","pages":["index","01_coding_style_and_commits","02_power_optimization","03_security_hardening","04_integration_and_collaboration","05_driver_development","06_multithreading_and_tasks","07_logging_and_diagnostics"]}

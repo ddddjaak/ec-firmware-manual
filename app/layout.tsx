@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 import { RootProvider } from 'fumadocs-ui/provider/next';
-import { JetBrains_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import { StaticSearchDialog } from '@/components/search-dialog';
 import './global.css';
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
+const jetbrainsMono = localFont({
+  src: './fonts/JetBrainsMono.ttf',
   variable: '--font-mono',
+  display: 'swap',
 });
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="zh-CN" className={jetbrainsMono.variable} suppressHydrationWarning>
       <body className="min-h-screen">
         <RootProvider
+          theme={{ defaultTheme: 'dark' }}
           search={{
             SearchDialog: StaticSearchDialog,
             options: {

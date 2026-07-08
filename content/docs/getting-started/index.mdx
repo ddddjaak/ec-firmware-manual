@@ -1,30 +1,99 @@
----
-title: 快速上手
----
-
-
-30 分钟内完成环境搭建、编译并烧录第一个固件。
-
+﻿---
+title: 概览
 ---
 
-<div className="grid-cards">
+本章是 **所有开发者必读的第一步**。你将按顺序完成三个步骤，从零搭建环境到固件在目标板上运行。整个过程约 **30 分钟**，每一步都是下一步的前置条件。
 
-- **环境搭建**
+<div className="flow-diagram">
 
-  安装 Zephyr SDK、Python、Git 等工具链
+<div className="flow-node node-purple">
+  <div className="flow-node-icon">🛠️</div>
+  <span className="flow-node-title">① 环境搭建</span>
+  <span className="flow-node-time">约 15 分钟</span>
+  <ul className="flow-node-steps">
+    <li>安装 Zephyr SDK</li>
+    <li>安装 ARM GNU Toolchain</li>
+    <li>安装 Python + West</li>
+  </ul>
+</div>
 
-  [阅读](/docs/getting-started/01_setup)
+<div className="flow-connector">▸</div>
 
-- **获取源码与编译**
+<div className="flow-node node-cyan">
+  <div className="flow-node-icon">⚡</div>
+  <span className="flow-node-title">② 编译构建</span>
+  <span className="flow-node-time">约 10 分钟</span>
+  <ul className="flow-node-steps">
+    <li>获取 EC 源码</li>
+    <li>west update 拉取依赖</li>
+    <li>west build 生成固件</li>
+  </ul>
+</div>
 
-  获取工程源码并完成首次编译
+<div className="flow-connector">▸</div>
 
-  [阅读](/docs/getting-started/02_source_and_build)
-
-- **烧录与验证**
-
-  烧录固件到目标板并验证运行
-
-  [阅读](/docs/getting-started/03_flash_and_verify)
+<div className="flow-node node-green">
+  <div className="flow-node-icon">🚀</div>
+  <span className="flow-node-title">③ 烧录验证</span>
+  <span className="flow-node-time">约 5 分钟</span>
+  <ul className="flow-node-steps">
+    <li>连接 J-Link 调试器</li>
+    <li>west flash 烧录固件</li>
+    <li>UART Console 验证运行</li>
+  </ul>
+</div>
 
 </div>
+
+---
+
+## 阅读顺序
+
+三个步骤是 **串行依赖** 关系——必须按顺序完成，上一步的输出是下一步的输入。
+
+<div className="step-cards my-6">
+
+<a className="step-card" href="/ec-firmware-manual/docs/getting-started/01_setup">
+  <span className="step-number" style={{"background":"linear-gradient(135deg, #673AB7, #9C27B0)"}}>①</span>
+  <div className="step-content">
+    <strong>环境搭建 <span className="step-badge" style={{"background":"rgba(103,58,183,0.1)","color":"#673AB7"}}>约 15 分钟</span></strong>
+    <p>安装 Zephyr SDK、ARM GNU Toolchain、Python 3.10+、West 元工具</p>
+    <div className="step-check">✓ 完成后可运行 <code className="text-xs">west --version</code> 验证</div>
+  </div>
+  <span className="step-arrow">→</span>
+</a>
+
+<div className="step-connector"></div>
+
+<a className="step-card" href="/ec-firmware-manual/docs/getting-started/02_source_and_build">
+  <span className="step-number" style={{"background":"linear-gradient(135deg, #0288D1, #00BCD4)"}}>②</span>
+  <div className="step-content">
+    <strong>获取源码与编译 <span className="step-badge" style={{"background":"rgba(0,188,212,0.1)","color":"#0288D1"}}>约 10 分钟</span></strong>
+    <p>克隆仓库、<code className="text-xs">west update</code> 拉取依赖模块、<code className="text-xs">west build</code> 首次编译</p>
+    <div className="step-check">✓ 完成后 <code className="text-xs">build/zephyr/</code> 下生成 <code className="text-xs">zephyr.elf</code> / <code className="text-xs">zephyr.bin</code></div>
+  </div>
+  <span className="step-arrow">→</span>
+</a>
+
+<div className="step-connector"></div>
+
+<a className="step-card" href="/ec-firmware-manual/docs/getting-started/03_flash_and_verify">
+  <span className="step-number" style={{"background":"linear-gradient(135deg, #059669, #10b981)"}}>③</span>
+  <div className="step-content">
+    <strong>烧录与验证 <span className="step-badge" style={{"background":"rgba(16,185,129,0.1)","color":"#059669"}}>约 5 分钟</span></strong>
+    <p>连接调试器、烧录固件、通过 UART Console 验证系统正常启动</p>
+    <div className="step-check">✓ 完成后在串口终端看到 <code className="text-xs">uart:~$</code> Shell 提示符</div>
+  </div>
+  <span className="step-arrow">→</span>
+</a>
+
+</div>
+
+## 阅读策略
+
+| 你的情况 | 建议 |
+|----------|------|
+| 第一次接触 Zephyr EC | 按 ①→②→③ 顺序完整阅读，边读边操作 |
+| 环境已搭好，只需编译 | 跳过 ①，从 [② 获取源码与编译](/docs/getting-started/02_source_and_build) 开始 |
+| 已有固件，只需烧录 | 直接看 [③ 烧录与验证](/docs/getting-started/03_flash_and_verify) |
+| 只想快速验证硬件 | 先看 ③ 了解烧录流程，确认板子能跑，再回头补 ①② |

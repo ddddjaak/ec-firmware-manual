@@ -2,53 +2,170 @@
 title: 移植与定制
 ---
 
+芯海 EC 方案服务于两个核心业务场景——**全新硬件平台选型**和**现有产品国产替代**。两者流程不同，本章按场景组织，方便你快速找到对应的路径。
 
-将 Zephyr EC 框架移植到新的硬件平台，或为现有平台进行深度功能定制。
+## 选择你的场景
 
----
+<div className="grid-cards my-6">
 
-<div className="grid-cards">
+- **🆕 全新平台选型**
 
-- **新平台移植流程**
+  客户新产品主板直接选择芯海 EC 芯片。从零开始创建 BSP、编写 DTS、适配驱动——流程标准、可预测。
 
-  移植前的准备工作、BSP 创建流程以及推荐的分阶段移植策略
+  [跳转到新平台移植流程 ↓](#全新平台移植)
 
-  [阅读](/docs/porting/01_porting_guide)
+- **🔄 现有产品国产替代**
 
-- **板级初始化**
+  客户现有产品使用 ITE / Nuvoton EC，希望用芯海 CSCE250X 实现国产化替代。需先从旧平台提取硬件配置、逐模块迁移、保留行为兼容性。
 
-  启动流程、链接脚本、时钟树、引脚控制和板级特定代码
-
-  [阅读](/docs/porting/02_board_initialization)
-
-- **设备树与驱动适配**
-
-  DTS 编写、驱动绑定启用和裁剪适配
-
-  [阅读](/docs/porting/03_devicetree_and_driver)
-
-- **功能与资源裁剪**
-
-  系统化的裁剪和优化是量产固件的必经环节
-
-  [阅读](/docs/porting/04_kconfig_and_optimization)
-
-- **新驱动开发流程**
-
-  Zephyr 驱动模型的标准化开发流程
-
-  [阅读](/docs/porting/05_new_driver_development)
-
-- **从传统 EC 平台迁移**
-
-  芯片替代场景——用芯海 Zephyr EC 芯片替换现有的 ITE 平台
-
-  [阅读](/docs/porting/06_migration_from_legacy_ec)
-
-- **新板 Bringup 清单**
-
-  基于 Chromium EC 上游的 Baseboard/Board 目录结构
-
-  [阅读](/docs/porting/07_bringup_checklist)
+  [跳转到传统平台迁移 ↓](#传统平台迁移)
 
 </div>
+
+## 全新平台移植
+
+从零创建板级支持包，5 个阶段流水线。每一步都建立在前一步基础上。
+
+<div className="flow-diagram flow-compact">
+
+<div className="flow-node node-amber">
+  <div className="flow-node-icon">📋</div>
+  <span className="flow-node-title">① 移植流程</span>
+  <p className="flow-node-desc">准备与策略</p>
+</div>
+
+<div className="flow-connector">▸</div>
+
+<div className="flow-node node-amber">
+  <div className="flow-node-icon">🔧</div>
+  <span className="flow-node-title">② 板级初始化</span>
+  <p className="flow-node-desc">启动/时钟/引脚</p>
+</div>
+
+<div className="flow-connector">▸</div>
+
+<div className="flow-node node-amber">
+  <div className="flow-node-icon">🌲</div>
+  <span className="flow-node-title">③ 设备树适配</span>
+  <p className="flow-node-desc">DTS & 驱动</p>
+</div>
+
+<div className="flow-connector">▸</div>
+
+<div className="flow-node node-amber">
+  <div className="flow-node-icon">✂️</div>
+  <span className="flow-node-title">④ 功能裁剪</span>
+  <p className="flow-node-desc">Kconfig & 优化</p>
+</div>
+
+<div className="flow-connector">▸</div>
+
+<div className="flow-node node-amber">
+  <div className="flow-node-icon">🧬</div>
+  <span className="flow-node-title">⑤ 新驱动开发</span>
+  <p className="flow-node-desc">驱动模型标准</p>
+</div>
+
+</div>
+
+<div className="step-cards my-4">
+
+<a className="step-card" href="/ec-firmware-manual/docs/porting/01_porting_guide">
+  <span className="step-number" style={{"background":"linear-gradient(135deg, #d97706, #f59e0b)"}}>①</span>
+  <div className="step-content">
+    <strong>新平台移植流程</strong>
+    <p>移植前准备、BSP 创建流程、推荐的分阶段移植策略。新平台必读。</p>
+  </div>
+  <span className="step-arrow">→</span>
+</a>
+
+<div className="step-connector"></div>
+
+<a className="step-card" href="/ec-firmware-manual/docs/porting/02_board_initialization">
+  <span className="step-number" style={{"background":"linear-gradient(135deg, #d97706, #e5980b)"}}>②</span>
+  <div className="step-content">
+    <strong>板级初始化</strong>
+    <p>启动流程、链接脚本、时钟树配置、引脚控制和板级特定代码实现。</p>
+  </div>
+  <span className="step-arrow">→</span>
+</a>
+
+<div className="step-connector"></div>
+
+<a className="step-card" href="/ec-firmware-manual/docs/porting/03_devicetree_and_driver">
+  <span className="step-number" style={{"background":"linear-gradient(135deg, #ca8a04, #d4a017)"}}>③</span>
+  <div className="step-content">
+    <strong>设备树与驱动适配</strong>
+    <p>DTS 节点编写、驱动 compatible 绑定、I2C/SPI 子设备配置、现有驱动的裁剪适配。</p>
+  </div>
+  <span className="step-arrow">→</span>
+</a>
+
+<div className="step-connector"></div>
+
+<a className="step-card" href="/ec-firmware-manual/docs/porting/04_kconfig_and_optimization">
+  <span className="step-number" style={{"background":"linear-gradient(135deg, #b7791f, #c6902a)"}}>④</span>
+  <div className="step-content">
+    <strong>功能与资源裁剪</strong>
+    <p>Kconfig 裁剪策略、Flash/RAM 优化、未使用模块的编译控制——量产固件的必经环节。</p>
+  </div>
+  <span className="step-arrow">→</span>
+</a>
+
+<div className="step-connector"></div>
+
+<a className="step-card" href="/ec-firmware-manual/docs/porting/05_new_driver_development">
+  <span className="step-number" style={{"background":"linear-gradient(135deg, #a16207, #b8860b)"}}>⑤</span>
+  <div className="step-content">
+    <strong>新驱动开发流程</strong>
+    <p>Zephyr 驱动模型的标准化开发流程——DT binding → driver ops → init → PM callback → 测试。</p>
+  </div>
+  <span className="step-arrow">→</span>
+</a>
+
+</div>
+
+## 传统平台迁移
+
+国产替代的核心路径。从 ITE 或 Nuvoton 平台提取硬件配置，逐模块迁移到芯海 Zephyr EC。
+
+> 迁移不只是换芯片——是 C51 裸机 → ARM Zephyr RTOS 的架构升级。详见 [迁移概览](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec)。
+
+<div className="grid-cards my-4">
+
+- **从 ITE IT557x 迁移**
+
+  C51 8 位 → ARM 32 位，架构差异最大。ITE 在国内笔记本市场保有量最大，是国产替代的核心场景。
+
+  [ITE 迁移指南 →](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec/01_ite)
+
+- **从 Nuvoton NPCX 迁移**
+
+  同为 ARM 架构，迁移难度较低。NPCX 在 Chromebook 生态中广泛使用，BSP HAL → Zephyr 驱动模型是核心转换点。
+
+  [Nuvoton 迁移指南 →](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec/02_nuvoton)
+
+</div>
+
+## 共同终点：Bringup 验证
+
+无论走哪条路径，最终都要通过同样的验证清单——板子跑起来、外设调通、性能达标。
+
+<a className="step-card" href="/ec-firmware-manual/docs/porting/07_bringup_checklist">
+  <span className="step-number" style={{"background":"linear-gradient(135deg, #059669, #10b981)"}}>⑦</span>
+  <div className="step-content">
+    <strong>新板 Bringup 清单</strong>
+    <p>启动验证、外设功能检查、性能基准测试——确保新板进入可交付状态的完整 checklist。</p>
+  </div>
+  <span className="step-arrow">→</span>
+</a>
+
+## 快速跳转
+
+| 场景 | 直接跳到 |
+|------|----------|
+| 全新芯片平台，从零开始 | [① 移植流程](/ec-firmware-manual/docs/porting/01_porting_guide) |
+| 已有板级代码，需适配外设 | [③ 设备树与驱动适配](/ec-firmware-manual/docs/porting/03_devicetree_and_driver) |
+| 从 ITE IT557x EC 国产替代 | [ITE 迁移指南](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec/01_ite) |
+| 从 Nuvoton NPCX EC 国产替代 | [Nuvoton 迁移指南](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec/02_nuvoton) |
+| 板子已跑起来，做最终验证 | [⑦ Bringup 清单](/ec-firmware-manual/docs/porting/07_bringup_checklist) |

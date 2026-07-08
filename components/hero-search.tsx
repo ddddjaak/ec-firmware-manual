@@ -22,11 +22,11 @@ export function HeroSearch() {
           })
         )
       }
-      className="group flex w-full max-w-md items-center gap-3 rounded-xl border border-purple-200 bg-purple-50/60 px-4 py-3 text-sm text-purple-400 transition-all hover:border-purple-400 hover:bg-purple-100/70 hover:text-purple-600 dark:border-white/10 dark:bg-white/5 dark:text-white/40 dark:hover:border-purple-400/30 dark:hover:bg-white/[0.08] dark:hover:text-white/70"
+      className="group flex w-full max-w-md items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/60 px-4 py-3 text-sm text-blue-400 transition-all hover:border-blue-400 hover:bg-blue-100/70 hover:text-blue-600 dark:border-white/10 dark:bg-white/5 dark:text-white/40 dark:hover:border-blue-400/30 dark:hover:bg-white/[0.08] dark:hover:text-white/70"
     >
       <Search className="h-4 w-4 shrink-0" />
       <span className="flex-1 text-left">搜索文档...</span>
-      <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-purple-200 bg-purple-100/60 px-1.5 py-0.5 font-mono text-[10px] text-purple-400 dark:border-white/10 dark:bg-white/5 dark:text-white/30">
+      <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-blue-200 bg-blue-100/60 px-1.5 py-0.5 font-mono text-[10px] text-blue-400 dark:border-white/10 dark:bg-white/5 dark:text-white/30">
         {modifier}+K
       </kbd>
     </button>

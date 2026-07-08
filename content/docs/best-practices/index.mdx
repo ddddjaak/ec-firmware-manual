@@ -1,35 +1,70 @@
 ---
-title: 最佳实践与建议
+title: 最佳实践
 ---
 
+量产级 EC 固件开发经验沉淀——从代码规范到系统架构，从质量保障到协作交付。
 
-基于 Chipsea OpenEC + Zephyr 平台的开发实践经验。
+## 工程规范
 
----
+打好基础——统一的代码风格和提交流程是团队协作的前提。
 
-<div className="grid-cards">
+<div className="grid-cards best-practices-cards">
 
 - **代码规范与提交流程**
 
-  代码风格与结构规范
+  代码风格、命名规则、Commit 格式、Doxygen 注释——新人入职第一课
 
   [阅读](/docs/best-practices/01_coding_style_and_commits)
 
+</div>
+
+## 系统设计
+
+架构决策直接影响固件的性能、可维护性和可靠性。
+
+<div className="grid-cards best-practices-cards">
+
+- **驱动开发规范**
+
+  Zephyr Device Driver Model 完整模板——compatible 定义、errno 约定、多实例、PM 回调、初始化优先级
+
+  [阅读](/docs/best-practices/05_driver_development)
+
+- **多线程与任务设计**
+
+  三层优先级模型、同步原语选择表、ISR 安全 API、死锁预防、栈大小监控
+
+  [阅读](/docs/best-practices/06_multithreading_and_tasks)
+
 - **功耗优化策略**
 
-  系统级优化（System Level）
+  系统级/外设级/应用级三层优化——深度睡眠、时钟门控、DMA 替代轮询
 
   [阅读](/docs/best-practices/02_power_optimization)
 
+</div>
+
+## 质量保障
+
+代码写完了，还要确保它安全、可诊断、可交付。
+
+<div className="grid-cards best-practices-cards">
+
 - **安全加固与运行时防护**
 
-  嵌入式控制器的多维度安全防护
+  Secure Boot、写保护、内存隔离、固件签名——多维度安全防护体系
 
   [阅读](/docs/best-practices/03_security_hardening)
 
+- **日志与诊断策略**
+
+  LOG_LEVEL 分层、Debug/Release 配置、运行时动态日志、diag dump 命令、远程日志
+
+  [阅读](/docs/best-practices/07_logging_and_diagnostics)
+
 - **与客户应用的集成与协作**
 
-  EC 与主机 BIOS、GUI、工厂测试系统的协作开发
+  API 抽象层设计、配置管理协作、联合调试、版本管理、OTA 发布流程
 
   [阅读](/docs/best-practices/04_integration_and_collaboration)
 

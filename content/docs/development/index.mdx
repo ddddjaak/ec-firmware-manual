@@ -1,36 +1,72 @@
----
+﻿---
 title: 开发指南
 ---
 
+EC 固件开发的核心参考。从架构设计到日常调试验证——四个领域覆盖完整开发流程。
 
-EC 固件开发的核心参考，涵盖架构设计、功能模块、外设驱动、调试验证等完整开发流程。
+<div className="hub-grid my-6">
 
----
+<a className="hub-card" href="/ec-firmware-manual/docs/development/architecture/01_layered_architecture">
+  <div className="hub-card-icon">🏗️</div>
+  <strong>架构与配置</strong>
+  <p>理解 EC 固件的分层模型、与传统 EC 的架构差异、工程目录结构和 Kconfig/DTS 配置体系。</p>
+  <div className="hub-card-sub">
+    <span style={{"background":"rgba(59,130,246,0.1)","color":"#3b82f6"}}>分层模型</span>
+    <span style={{"background":"rgba(59,130,246,0.1)","color":"#3b82f6"}}>目录结构</span>
+    <span style={{"background":"rgba(59,130,246,0.1)","color":"#3b82f6"}}>配置体系</span>
+    <span style={{"background":"rgba(59,130,246,0.1)","color":"#3b82f6"}}>源码对照</span>
+  </div>
+  <span className="hub-card-arrow">→</span>
+</a>
 
-<div className="grid-cards">
+<a className="hub-card" href="/ec-firmware-manual/docs/development/modules/01_system_infrastructure">
+  <div className="hub-card-icon">📦</div>
+  <strong>功能模块</strong>
+  <p>13 个应用模块 + 18 个驱动模块的完整参考，从电源管理到外设存储全覆盖。</p>
+  <div className="hub-card-sub">
+    <span style={{"background":"rgba(139,92,246,0.1)","color":"#8b5cf6"}}>电源管理</span>
+    <span style={{"background":"rgba(139,92,246,0.1)","color":"#8b5cf6"}}>键盘扫描</span>
+    <span style={{"background":"rgba(139,92,246,0.1)","color":"#8b5cf6"}}>电池充电</span>
+    <span style={{"background":"rgba(139,92,246,0.1)","color":"#8b5cf6"}}>USB & PD</span>
+    <span style={{"background":"rgba(139,92,246,0.1)","color":"#8b5cf6"}}>热管理</span>
+    <span style={{"background":"rgba(139,92,246,0.1)","color":"#8b5cf6"}}>+ 更多</span>
+  </div>
+  <span className="hub-card-arrow">→</span>
+</a>
 
-- **架构与配置**
+<a className="hub-card" href="/ec-firmware-manual/docs/development/appdev/01_new_feature_module">
+  <div className="hub-card-icon">🔧</div>
+  <strong>应用开发</strong>
+  <p>新增功能模块、调用外设驱动、任务与事件模型、主机通信协议、电源与唤醒管理。</p>
+  <div className="hub-card-sub">
+    <span style={{"background":"rgba(236,72,153,0.1)","color":"#ec4899"}}>新增模块</span>
+    <span style={{"background":"rgba(236,72,153,0.1)","color":"#ec4899"}}>外设驱动</span>
+    <span style={{"background":"rgba(236,72,153,0.1)","color":"#ec4899"}}>任务模型</span>
+    <span style={{"background":"rgba(236,72,153,0.1)","color":"#ec4899"}}>主机通信</span>
+  </div>
+  <span className="hub-card-arrow">→</span>
+</a>
 
-  分层模型、目录结构、配置体系
-
-  [阅读](/docs/development/architecture/01_layered_architecture)
-
-- **功能模块**
-
-  13 个应用模块 + 18 个驱动模块详解
-
-  [阅读](/docs/development/modules/01_system_infrastructure)
-
-- **应用开发**
-
-  新增模块、外设驱动、任务模型、主机通信
-
-  [阅读](/docs/development/appdev/01_new_feature_module)
-
-- **调试与验证**
-
-  日志、单元测试、异常分析、FAQ
-
-  [阅读](/docs/development/debug/01_logging_and_debug)
+<a className="hub-card" href="/ec-firmware-manual/docs/development/debug/01_logging_and_debug">
+  <div className="hub-card-icon">🐛</div>
+  <strong>调试与验证</strong>
+  <p>Zephyr Logging / Shell 调试工具、单元测试与仿真平台、异常和崩溃分析方法、FAQ 排错手册。</p>
+  <div className="hub-card-sub">
+    <span style={{"background":"rgba(245,158,11,0.1)","color":"#f59e0b"}}>日志系统</span>
+    <span style={{"background":"rgba(245,158,11,0.1)","color":"#f59e0b"}}>单元测试</span>
+    <span style={{"background":"rgba(245,158,11,0.1)","color":"#f59e0b"}}>异常分析</span>
+    <span style={{"background":"rgba(245,158,11,0.1)","color":"#f59e0b"}}>功能验证</span>
+  </div>
+  <span className="hub-card-arrow">→</span>
+</a>
 
 </div>
+
+## 如何使用
+
+| 你的角色 | 推荐路径 |
+|----------|----------|
+| 新加入 EC 开发 | 先看 [架构与配置](/docs/development/architecture/01_layered_architecture) 建立全局认知 |
+| 开发新功能 | 直接跳到 [应用开发](/docs/development/appdev/01_new_feature_module) + 参考 [功能模块](/docs/development/modules/01_system_infrastructure) |
+| 排查 Bug | 从 [调试与验证](/docs/development/debug/01_logging_and_debug) 入手，用 Shell 命令定位 |
+| 需要了解某模块 | [功能模块](/docs/development/modules/01_system_infrastructure) 下按需查阅 |

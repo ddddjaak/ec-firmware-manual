@@ -18,6 +18,18 @@ export const staticSlugs: string[][] = [
   ],
   [
     "best-practices",
+    "05_driver_development"
+  ],
+  [
+    "best-practices",
+    "06_multithreading_and_tasks"
+  ],
+  [
+    "best-practices",
+    "07_logging_and_diagnostics"
+  ],
+  [
+    "best-practices",
     "index"
   ],
   [
@@ -219,6 +231,21 @@ export const staticSlugs: string[][] = [
   ],
   [
     "porting",
+    "06_migration_from_legacy_ec",
+    "01_ite"
+  ],
+  [
+    "porting",
+    "06_migration_from_legacy_ec",
+    "02_nuvoton"
+  ],
+  [
+    "porting",
+    "06_migration_from_legacy_ec",
+    "index"
+  ],
+  [
+    "porting",
     "06_migration_from_legacy_ec"
   ],
   [
@@ -231,6 +258,61 @@ export const staticSlugs: string[][] = [
   ],
   [
     "porting"
+  ],
+  [
+    "qa",
+    "01_battery_and_power"
+  ],
+  [
+    "qa",
+    "02_communication_protocols"
+  ],
+  [
+    "qa",
+    "03_peripherals_and_input"
+  ],
+  [
+    "qa",
+    "04_build_and_config"
+  ],
+  [
+    "qa",
+    "05_runtime_crash"
+  ],
+  [
+    "qa",
+    "06_firmware_upgrade"
+  ],
+  [
+    "qa",
+    "07_test_and_ci"
+  ],
+  [
+    "qa",
+    "08_usb_and_pd"
+  ],
+  [
+    "qa",
+    "09_thermal_management"
+  ],
+  [
+    "qa",
+    "10_ec_host_interaction"
+  ],
+  [
+    "qa",
+    "11_interrupt_and_timing"
+  ],
+  [
+    "qa",
+    "12_gpio_and_pinmux"
+  ],
+  [
+    "qa",
+    "index"
+  ],
+  [
+    "qa"
   ],
   [
     "reference",

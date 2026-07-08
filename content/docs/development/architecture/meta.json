@@ -1,5 +1,5 @@
 {
-  "title": "Architecture & Configuration",
+  "title": "架构与配置",
   "pages": [
     "01_layered_architecture",
     "02_vs_legacy_ec",

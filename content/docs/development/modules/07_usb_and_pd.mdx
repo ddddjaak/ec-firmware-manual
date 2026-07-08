@@ -155,9 +155,9 @@ uart:~$ pd <port> dump       # 寄存器转储
 
 ### 详细参考资料
 
-- [Type-C 和 EC 端口控制器（TCPC）](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/new_driver_tcpc) — TCPC 驱动开发指南
-- [USB PD 调试](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/usb-pd-debugging) — PD 故障排查方法
-- [PD VDM](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/pd_vdm) — VDM/SVDM 消息详解
+- [USB PD 规范（USB-IF）](https://www.usb.org/document-library/usb-power-delivery) — 官方 PD 3.1 规范文档
+- [Zephyr USB-C PD Stack](https://docs.zephyrproject.org/latest/connectivity/usb/overview.html) — Zephyr 原生 USB-C PD 子系统文档
+- [TCPC 驱动模型](/ec-firmware-manual/docs/development/modules/07_usb_and_pd) — 芯海 EC TCPC 驱动开发指南
 
 ## 固件写保护机制
 
@@ -221,7 +221,7 @@ ectool flashprotect disable
 
 ### 参考资料
 
-- [Chromium OS 写保护文档](https://chromium.googlesource.com/chromiumos/docs/+/HEAD/write_protection)
+- [Zephyr Flash Map 文档](https://docs.zephyrproject.org/latest/services/storage/flash_map/flash_map.html) — Zephyr 闪存分区管理
 
 
 

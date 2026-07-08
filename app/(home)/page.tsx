@@ -1,63 +1,16 @@
 import Link from 'next/link';
 import {
-  Rocket, BookOpen, Cable, Terminal,
-  Cpu, Bug, Shield, Layers,
-  ArrowRight, Clock, Zap, Braces, ChevronRight, Blocks,
-  Microchip, BatteryFull, Usb, Wifi, Thermometer,
+  BookOpen, Cable, Terminal,
+  Cpu, Layers,
+  Zap, Braces, ChevronRight, Blocks,
+  Microchip,
   Sparkles, FileText, Gauge, GitBranch, MessageSquare,
-  TrendingUp, Lock, Feather, RefreshCw, CheckCircle2,
+  TrendingUp, Lock, Feather,
+  Laptop, Tablet, Factory, Globe,
+  Download, Settings, Code2, FlaskConical, Package,
 } from 'lucide-react';
 import { CircuitBackground } from '@/components/circuit-background';
 import { ScrollReveal } from '@/components/scroll-reveal';
-import { HeroSearch } from '@/components/hero-search';
-
-const exploreCards = [
-  {
-    cols: 'sm:col-span-2',
-    icon: Layers,
-    tag: '架构',
-    title: '四层设计',
-    desc: '应用层 → 服务层 → 驱动层 → 硬件层。理解每一层如何抽象其下层。',
-    href: '/docs/development/architecture/01_layered_architecture',
-  },
-  {
-    icon: Cpu,
-    tag: '模块',
-    title: '10 个子系统',
-    desc: '电源时序、键盘扫描、电池充电、热管理、USB PD — 每个子系统均有详尽文档。',
-    href: '/docs/development/modules/01_system_infrastructure',
-  },
-  {
-    icon: Cable,
-    tag: '移植',
-    title: 'BSP 创建',
-    desc: '从零构建板级支持 — 引脚复用、设备树、Kconfig 及新硬件的启动流程。',
-    href: '/docs/porting/01_porting_guide',
-  },
-  {
-    icon: Terminal,
-    tag: '参考',
-    title: '命令速查表',
-    desc: 'West、CMake、Git 及调试命令一览。',
-    href: '/docs/reference/01_command_reference',
-  },
-  {
-    icon: Bug,
-    tag: '调试',
-    title: '崩溃分析与常见问题',
-    desc: '致命错误、看门狗复位、栈溢出及常见陷阱。',
-    href: '/docs/development/debug/01_logging_and_debug',
-  },
-  {
-    cols: 'sm:col-span-3',
-    icon: Shield,
-    tag: '生产',
-    title: '最佳实践与优化',
-    desc: '编码规范、功耗调优、安全加固及客户集成流程，助力量产固件交付。',
-    href: '/docs/best-practices',
-    time: '5 篇指南',
-  },
-];
 
 const quickLinks = [
   { icon: BookOpen, label: '开发指南', href: '/docs/development' },
@@ -66,372 +19,503 @@ const quickLinks = [
   { icon: Terminal, label: '命令参考', href: '/docs/reference/01_command_reference' },
 ];
 
-const techStack = [
-  { icon: Microchip, label: 'Zephyr RTOS 3.7', desc: '开源实时操作系统' },
-  { icon: Cpu, label: 'Cortex-M33/M0+', desc: 'ARMv8-M / v6-M 架构' },
-  { icon: Cable, label: 'USB PD 3.1', desc: '电源传输协议' },
-  { icon: Usb, label: 'USB Type-C', desc: '接口与 Alt Mode' },
-  { icon: BatteryFull, label: '电池管理', desc: '充电与电量计' },
-  { icon: Thermometer, label: '热管理', desc: '温度监控与风扇' },
-  { icon: Wifi, label: 'EC 通信', desc: 'Host 命令与 I2C' },
-  { icon: Shield, label: '信息安全', desc: '写保护与安全启动' },
-];
-
 const highlights = [
   {
     icon: FileText,
-    title: '55+ 详细文档',
-    desc: '从快速上手到深度移植，覆盖 EC 固件开发全流程。每个模块都有独立章节，配以架构图和代码示例。',
+    title: '79 页技术文档',
+    desc: '从环境搭建、架构原理到量产部署——覆盖全生命周期。每模块独立成章，配 CSS 架构图与可运行代码示例。',
   },
   {
     icon: GitBranch,
-    title: '多平台源码参考',
-    desc: '基于芯海多款 Zephyr EC 芯片的完整 BSP 实现。驱动模型与硬件抽象层统一，一套代码适配多个平台，降低维护成本。',
-  },
-  {
-    icon: Gauge,
-    title: '性能优化指南',
-    desc: '功耗调优、中断延迟优化、内存布局建议——帮助你将固件打磨到量产级别。',
+    title: '三芯片统一平台',
+    desc: 'CSCE250X / CSCE2010 / CSCE2520 共享驱动模型。一套应用代码，编译时自动适配——产能弹性、备货灵活。',
   },
   {
     icon: Sparkles,
-    title: '从 ITE 到 Zephyr',
-    desc: '完整的迁移指南：对比 ITE IT557x 参考实现与 Zephyr 方案，逐模块说明差异与适配要点。',
+    title: '传统 C51 → Zephyr 迁移方案',
+    desc: '完整的逐模块迁移指南：GPIO、电源序列、键盘扫描、电池管理。分阶段策略 + 常见陷阱预警，降低切换风险。',
+  },
+  {
+    icon: Gauge,
+    title: '量产级性能与安全',
+    desc: '功耗调优、Flash/RAM 布局优化、MCUboot 安全启动。直接满足企业客户安全审计与量产基线要求。',
   },
   {
     icon: MessageSquare,
-    title: '常见问题与调试',
-    desc: '看门狗复位、栈溢出、HardFault 分析——收录实际开发中最常遇到的坑及排查方法。',
+    title: '全链路调试工具链',
+    desc: 'Shell 交互、Logging 分级、SystemView 追踪、HardFault 根因分析。从 printf 升级到现代调试体系。',
+  },
+  {
+    icon: BookOpen,
+    title: 'Windows + Linux 双平台支持',
+    desc: '每行命令均附安全透明说明——下载源、写入路径、影响范围一目了然。消除客户对未知环境的顾虑。',
   },
 ];
+
+const useCases = [
+  {
+    icon: Laptop,
+    title: '笔记本 EC',
+    desc: 'Intel/AMD 平台嵌入式控制器，管理键盘、电池、温度、风扇及系统状态，支持现代待机 S0ix。',
+    chips: 'CSCE250X · CSCE2520',
+  },
+  {
+    icon: Globe,
+    title: 'Chromebook EC',
+    desc: 'Google Chrome OS 兼容 EC 方案，通过严格 CTS 认证，支持深度休眠与即时唤醒。',
+    chips: 'CSCE250X',
+  },
+  {
+    icon: Tablet,
+    title: '平板 / 二合一',
+    desc: '低功耗 EC 固件，管理 Type-C 充电、传感器 Hub 及可拆卸键盘，深度休眠功耗 < 50μA。',
+    chips: 'CSCE2010 · CSCE250X',
+  },
+  {
+    icon: Factory,
+    title: '工业嵌入式控制器',
+    desc: '宽温域 (-40~85°C)、长寿命支持，适用于工业平板、POS 机、医疗终端等严苛环境。',
+    chips: 'CSCE2010',
+  },
+];
+
+const devFlow = [
+  { icon: Download, step: '01', title: '环境搭建', desc: '安装 Zephyr SDK、Python 依赖、交叉编译工具链及 J-Link 驱动' },
+  { icon: Settings, step: '02', title: '板级适配', desc: '编写 Device Tree、Kconfig 配置，定义引脚复用与功能裁剪' },
+  { icon: Code2, step: '03', title: '驱动开发', desc: '基于 Zephyr 驱动模型开发外设驱动，复用芯海 18+ 现有驱动' },
+  { icon: FlaskConical, step: '04', title: '功能验证', desc: 'Ztest 单元测试 + Twister 自动化测试 + EVB 实机验证' },
+  { icon: Package, step: '05', title: '量产部署', desc: '固件签名、写保护配置、生产烧录流程及 OTA 升级方案' },
+];
+
 
 export default function HomePage() {
   return (
     <main className="flex flex-col items-center">
       {/* ================================================================
-          Hero — thesis: "Everything you need to build EC firmware"
+          Hero — value proposition for decision makers
           ================================================================ */}
       <section className="cyber-hero w-full">
         <CircuitBackground />
         <div className="cyber-hero-bg" />
         <div className="cyber-hero-dots" />
 
-        <h1 className="hero-title">芯海 Zephyr EC 方案</h1>
+        <h1 className="hero-title">安全 · 高效 · 自主可控</h1>
         <div className="hero-divider" />
         <p className="hero-tagline">
-          <Zap className="inline h-4 w-4 -mt-0.5 text-cyan-400" /> 芯海全系 EC 芯片 Zephyr 开发方案 — 一套代码，多平台复用，从裸机到 RTOS 的现代化升级
+          芯海 Zephyr EC — 企业级嵌入式控制器方案。从芯片选型到固件量产一站式交付，多款量产机型验证。
         </p>
-
-        {/* Search bar */}
-        <div className="mt-6 flex justify-center">
-          <HeroSearch />
-        </div>
 
         {/* CTA button */}
         <div className="mt-5 flex justify-center px-4 sm:px-0">
-          <Link href="/docs/getting-started" className="hero-cta group w-full sm:w-auto justify-center">
-            开始构建
-            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          <div className="relative">
+            <div className="hero-cta-pulse" />
+            <Link href="/docs/getting-started" className="hero-cta group w-full sm:w-auto justify-center relative z-10">
+              开始 Zephyr！
+              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
         </div>
 
         {/* Quick nav pills */}
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           {quickLinks.map(({ icon: Icon, label, href }) => (
             <Link
               key={label}
               href={href}
-              className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all
-                border-purple-200 text-purple-600 hover:border-purple-400 hover:bg-purple-50 hover:text-purple-800
-                dark:border-white/10 dark:text-white/70 dark:hover:border-purple-400/50 dark:hover:bg-purple-500/20 dark:hover:text-white"
+              className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all
+                border-blue-200 text-blue-600 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-800
+                dark:border-white/10 dark:text-white/70 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/20 dark:hover:text-white"
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-4 w-4" />
               {label}
             </Link>
           ))}
         </div>
       </section>
 
-      {/* ================================================================
-          Core Advantages — why Chipsea Zephyr EC
-          ================================================================ */}
       <div className="stats-divider" />
-      <section className="w-full max-w-5xl px-4 py-10">
+
+      {/* ================================================================
+          Pain → Solution — full-width contrast band
+          ================================================================ */}
+      <div className="section-band section-band-contrast">
+      <div className="section-band-inner">
+      <section>
+        <p className="section-eyebrow text-center" style={{fontSize:'1rem', letterSpacing:'0.15em', marginBottom:'0.5rem'}}>传统方式的代价 vs 芯海的解法</p>
+        <p className="mt-1 mb-10 text-center text-lg font-medium text-fd-muted-foreground max-w-xl mx-auto">
+          换 EC 芯片不应意味着重写整个固件。我们让迁移变成<strong className="text-fd-foreground">配置</strong>，而非重构。
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+          {/* Pain Points */}
+          <div className="pain-card flex flex-col gap-5">
+            <p className="text-xl font-black uppercase tracking-widest text-red-500 dark:text-red-400" style={{fontSize:'0.8rem', letterSpacing:'0.2em'}}>
+              ✕ 你正在承担的隐性成本
+            </p>
+            {[
+              { pain: '换芯片 = 重写固件', cost: '项目延期、预算超支' },
+              { pain: '多产品线独立代码分支', cost: '同一个 bug 修 N 遍' },
+              { pain: '调试靠串口 printf', cost: '问题定位依赖最熟悉代码的那个人' },
+              { pain: '工程师离职 = 代码变黑盒', cost: '团队陷入被动，无人敢改' },
+              { pain: '裸机升级 RTOS', cost: '推倒重来，技术债越积越重' },
+            ].map(({ pain, cost }, i) => (
+              <div key={i} className="flex flex-col gap-0.5">
+                <span className="text-base font-bold text-fd-foreground">{pain}</span>
+                <span className="text-sm text-red-500/70 dark:text-red-400/60">→ {cost}</span>
+              </div>
+            ))}
+          </div>
+          {/* Solution */}
+          <div className="solution-card flex flex-col gap-5">
+            <p className="text-xl font-black uppercase tracking-widest text-green-500 dark:text-green-400" style={{fontSize:'0.8rem', letterSpacing:'0.2em'}}>
+              ✓ 芯海 Zephyr EC 替你消除这些风险
+            </p>
+            {[
+              { fix: '换芯片 = 改 Device Tree 配置', result: '应用代码零修改，3 天出原型' },
+              { fix: '一套驱动覆盖全产品线', result: '修一次 bug，全系产品受益' },
+              { fix: '自动化测试 + CI 门禁', result: '每次提交自动验证，质量可度量' },
+              { fix: '代码结构标准化', result: '新成员加入即能定位问题，不依赖个人' },
+              { fix: 'Zephyr LTS 社区维护', result: '技术债可控，跟随主线持续演进' },
+            ].map(({ fix, result }, i) => (
+              <div key={i} className="flex flex-col gap-0.5">
+                <span className="text-base font-bold text-fd-foreground">{fix}</span>
+                <span className="text-sm text-green-600/70 dark:text-green-400/60">→ {result}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      </div>
+      </div>
+
+      {/* ================================================================
+          Core Advantages — alternating band
+          ================================================================ */}
+      <div className="section-band section-band-alt">
+      <div className="section-band-inner">
+      <section>
         <p className="section-eyebrow text-center">芯海 Zephyr EC 核心优势</p>
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {
               icon: Zap,
-              title: '现代化 RTOS 内核',
-              desc: '基于 Zephyr RTOS 3.7 LTS，抢占式多任务调度、微秒级中断响应、内置电源管理框架。告别裸机 while(1) 循环，用线程思维构建复杂 EC 逻辑。',
-              stat: 'Zephyr 3.7 LTS',
+              stat: '3 天\n出原型',
+              title: '架构现代化',
+              desc: 'Zephyr RTOS + Device Tree + 统一驱动模型。新平台 bring-up 从数周压缩到 3 天，功能模块开箱即用。',
             },
             {
               icon: Feather,
-              title: '极致轻量 · 超低功耗',
-              desc: '最小镜像 < 64KB Flash / 8KB RAM。深度睡眠模式下 EC 功耗低至微安级，满足 Intel/AMD 现代笔记本严苛的 S0ix 待机要求。',
-              stat: '<64KB Flash',
+              stat: '三芯片\n阶梯覆盖',
+              title: '按需选型，成本最优',
+              desc: 'CSCE2010 轻量级 / CSCE250X 高性能 / CSCE2520 安全旗舰。Flash 256-512KB，不用为不需要的功能买单。',
             },
             {
               icon: Lock,
-              title: '芯片级安全可信',
-              desc: '安全启动、写保护、固件回滚防护——从芯片上电第一行代码开始构建信任链。CSCE2520 平台将进一步支持 ARM TrustZone + TF-M 可信执行环境。',
-              stat: '安全启动 + 写保护',
+              stat: '芯片级\n安全基线',
+              title: '安全合规就绪',
+              desc: '内置 MCUboot 安全启动与写保护，上电即建信任链。满足企业客户安全审计要求，CSCE2520 集成 Arm TrustZone。',
             },
             {
               icon: TrendingUp,
-              title: '量产验证 · 持续迭代',
-              desc: '已在芯海多款 EC 芯片上完整验证，所有驱动经过压力测试。13 个功能模块、18 个设备驱动可直接复用，大幅缩短产品上市周期。',
-              stat: '13 模块 / 18 驱动',
+              stat: '多机型\n量产验证',
+              title: '非实验室原型，产线就绪',
+              desc: '笔记本、平板、工控机多品类已通过量产验证。驱动经 24h 压力测试，方案成熟可立即投入项目。',
             },
-          ].map(({ icon: Icon, title, desc, stat }, i) => (
+          ].map(({ icon: Icon, stat, title, desc }, i) => (
             <ScrollReveal key={title} delay={i * 100}>
-              <div className="group relative flex flex-col gap-3 overflow-hidden rounded-xl border border-purple-200/60 bg-white/30 backdrop-blur-xl shadow-lg border-white/50 p-6 transition-all hover:border-purple-400 hover:shadow-lg dark:border-purple-500/15 dark:bg-white/[0.02] dark:backdrop-blur-xl dark:border-white/[0.06] dark:hover:border-purple-400/40 dark:hover:bg-white/[0.04]" style={{ borderLeftWidth: 3, borderLeftColor: 'var(--color-fd-primary)' }}>
-                <div className="absolute right-4 top-4 rounded-full bg-purple-500/8 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-600 dark:bg-purple-400/10 dark:text-purple-300">
-                  {stat}
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 ring-1 ring-purple-500/20">
-                  <Icon className="h-6 w-6 text-purple-500 transition-colors group-hover:text-purple-600 dark:text-purple-400 dark:group-hover:text-cyan-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-fd-foreground">{title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-fd-muted-foreground">{desc}</p>
+              <div className="card flex h-full flex-col overflow-hidden">
+                <div className="card-accent-bar" />
+                <div className="flex flex-1 flex-col gap-4 p-5">
+                  {/* Icon + Stat row */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 ring-1 ring-blue-500/20">
+                      <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                    </div>
+                    <span className="text-right font-mono text-xs font-bold leading-tight text-blue-500/70 dark:text-blue-400/50 whitespace-pre">
+                      {stat}
+                    </span>
+                  </div>
+                  {/* Title + Description */}
+                  <div className="flex flex-1 flex-col">
+                    <h3 className="text-xl font-extrabold text-fd-foreground">{title}</h3>
+                    <p className="mt-2 text-base leading-relaxed text-fd-muted-foreground">{desc}</p>
+                  </div>
                 </div>
               </div>
             </ScrollReveal>
           ))}
         </div>
       </section>
-
-      <div className="stats-divider" />
-
-      {/* ================================================================
-          Why Zephyr — contrast with traditional EC dev
-          ================================================================ */}
-      <section className="w-full max-w-5xl px-4 py-10">
-        <p className="section-eyebrow text-center">为什么选择 Zephyr</p>
-        <p className="mt-1 text-center text-sm text-fd-muted-foreground">
-          传统 EC 裸机开发 vs 芯海 Zephyr EC 方案 — 不只是换个 RTOS，而是开发范式的升级
-        </p>
-        <div className="mt-8 overflow-hidden rounded-2xl border border-purple-200/60 dark:border-purple-500/15">
-          <div className="grid grid-cols-1 sm:grid-cols-2">
-            {/* Traditional Side */}
-            <div className="flex flex-col gap-4 bg-red-50/40 p-6 dark:bg-red-950/10">
-              <p className="text-sm font-bold uppercase tracking-wider text-red-600 dark:text-red-400">传统裸机 EC 开发</p>
-              {[
-                '手写寄存器配置，易出错难维护',
-                '每颗芯片独立 SDK，代码无法复用',
-                '无标准测试框架，靠串口 printf 调试',
-                '电源管理靠经验，缺乏框架化支持',
-                '升级 RTOS 需重构全部代码',
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <span className="mt-0.5 shrink-0 text-red-400">✕</span>
-                  <span className="text-sm text-fd-muted-foreground">{item}</span>
-                </div>
-              ))}
-            </div>
-            {/* Zephyr Side */}
-            <div className="flex flex-col gap-4 bg-green-50/40 p-6 dark:bg-green-950/10">
-              <p className="text-sm font-bold uppercase tracking-wider text-green-600 dark:text-green-400">芯海 Zephyr EC 方案</p>
-              {[
-                'Device Tree 描述硬件，Kconfig 管理功能',
-                '统一 Zephyr 驱动模型，跨平台代码复用',
-                'Ztest 单元测试 + Twister CI 自动化',
-                'Zephyr PM 框架，细粒度功耗状态管理',
-                'Upstream-first 策略，跟随主线持续演进',
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-                  <span className="text-sm font-medium text-fd-foreground">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      </div>
+      </div>
 
       {/* ================================================================
           Impact Metrics — quantified benefits
           ================================================================ */}
-      <section className="w-full max-w-5xl px-4 pb-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="section-band">
+      <div className="section-band-inner">
+      <section>
+        <p className="section-eyebrow text-center">量化收益</p>
+        <p className="mt-1 mb-8 text-center text-base text-fd-muted-foreground">
+          不只帮研发提效——更让产品总监和决策者看到可衡量的商业回报
+        </p>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           {[
-            { value: '60%', label: '开发效率提升', desc: 'Device Tree + Kconfig 替代手写寄存器，新板 bring-up 从数周缩短到数天', icon: RefreshCw },
-            { value: '3×', label: '代码复用率', desc: '统一驱动模型让外设驱动跨项目复用，告别每颗芯片重写 I2C/SPI 驱动的历史', icon: GitBranch },
-            { value: '0', label: '供应商锁定', desc: '基于 Apache 2.0 开源协议，上游代码由 Linux Foundation 托管，不受单一厂商限制', icon: Lock },
-          ].map(({ value, label, desc, icon: Icon }, i) => (
+            { value: '3 天', label: '上市周期', desc: '新平台 bring-up 从数周压缩到 3 天出原型。硬件就绪即可上固件，产品迭代不再卡在 EC 环节——抢占市场窗口期，比对手快一步。', icon: TrendingUp, color: 'text-amber-500 dark:text-amber-400', bg: 'bg-amber-500/10 ring-amber-500/20' },
+            { value: '1 套代码', label: '全产品线复用', desc: '一套驱动代码覆盖笔记本、平板、工控机所有产品线。新增 SKU 只需改设备树，不需为新项目重新组建 EC 团队或外包——研发投入一次，全系产品受益。', icon: Layers, color: 'text-violet-500 dark:text-violet-400', bg: 'bg-violet-500/10 ring-violet-500/20' },
+            { value: '0', label: '供应链锁定风险', desc: 'Apache 2.0 开源协议，上游代码由 Linux Foundation 托管。你的固件资产不受单一芯片厂商绑定——即使切换供应商，代码和工具链完全自主可控。', icon: Lock, color: 'text-emerald-500 dark:text-emerald-400', bg: 'bg-emerald-500/10 ring-emerald-500/20' },
+          ].map(({ value, label, desc, icon: Icon, color, bg }, i) => (
             <ScrollReveal key={label} delay={i * 120}>
-              <div className="flex flex-col items-center gap-3 rounded-xl border border-purple-200/60 bg-white/30 backdrop-blur-xl shadow-lg border-white/50 p-6 text-center transition-all hover:border-purple-300 hover:shadow-md dark:border-purple-500/15 dark:bg-white/[0.02] dark:backdrop-blur-xl dark:border-white/[0.06] dark:hover:border-purple-400/30 dark:hover:bg-white/[0.04]">
-                <Icon className="h-5 w-5 text-purple-400" />
-                <span className="font-mono text-3xl font-extrabold text-purple-600 dark:text-cyan-400">{value}</span>
-                <p className="text-sm font-bold text-fd-foreground">{label}</p>
-                <p className="text-xs leading-relaxed text-fd-muted-foreground">{desc}</p>
+              <div className="card flex h-full flex-col items-center gap-3 p-6 text-center">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bg}`}>
+                  <Icon className={`h-5 w-5 ${color}`} />
+                </div>
+                <span className={`font-mono text-5xl font-black ${color}`} style={{lineHeight:1.1}}>{value}</span>
+                <p className="text-base font-extrabold text-fd-foreground">{label}</p>
+                <p className="flex-1 text-sm leading-relaxed text-fd-muted-foreground">{desc}</p>
               </div>
             </ScrollReveal>
           ))}
         </div>
       </section>
-
-      <div className="stats-divider" />
-
-      {/* ================================================================
-          Featured — "Start Here" — the primary action, visually distinct
-          ================================================================ */}
-      <div className="stats-divider" />
-      <section className="w-full max-w-5xl px-4 pt-8 sm:pt-14 pb-6">
-        <p className="section-eyebrow">从这里开始</p>
-        <ScrollReveal>
-          <Link href="/docs/getting-started" className="featured-card group">
-            <div className="featured-card-icon">
-              <Rocket className="transition-transform group-hover:scale-110" />
-            </div>
-            <div className="featured-card-content">
-              <span className="featured-card-tag mb-1 block">
-                <Clock className="h-3 w-3" /> 3 篇指南
-              </span>
-              <h3>30 分钟从零到固件</h3>
-              <p>
-                配置工具链、克隆 SDK、完成首次编译、烧录到 EVB — 从空目录到运行 EC 固件所需的一切。
-              </p>
-            </div>
-            <span className="featured-card-cta group-hover:gap-2 transition-all">
-              开始上手 <ArrowRight className="h-3.5 w-3.5" />
-            </span>
-          </Link>
-        </ScrollReveal>
-      </section>
+      </div>
+      </div>
 
       {/* ================================================================
-          Supported Platforms
+          Supported Platforms — full showcase
           ================================================================ */}
-      <section className="w-full max-w-5xl px-4 pb-10">
+      <div className="section-band">
+      <div className="section-band-inner">
+      <section>
         <p className="section-eyebrow text-center">支持平台</p>
-        <p className="mt-1 text-center text-sm text-fd-muted-foreground">
+        <p className="mt-1 text-center text-base text-fd-muted-foreground">
           统一 Zephyr 驱动模型，一套代码适配芯海全系 EC 芯片
         </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          {[
-            { name: 'CSCE250X', desc: 'Cortex-M33 · 高性能 EC', active: true },
-            { name: 'CSCE2010', desc: 'Cortex-M0+ · 轻量 EC' },
-            { name: 'CSCE2520', desc: 'Cortex-M33 · 新一代 EC', upcoming: true },
-          ].map(({ name, desc, active, upcoming }) => (
-            <ScrollReveal key={name} delay={60}>
-              <div className={`flex min-h-[100px] flex-col items-center justify-center gap-1 rounded-xl border px-5 py-3 text-center transition-all hover:shadow-md ${
-                active
-                  ? 'border-white/60 bg-white/40 backdrop-blur-xl shadow-lg dark:border-white/[0.10] dark:bg-white/[0.04]'
-                  : 'border-purple-200/60 bg-white/30 backdrop-blur-xl shadow-lg border-white/50 dark:border-purple-500/10 dark:bg-white/[0.02] dark:backdrop-blur-xl dark:border-white/[0.06]'
-              }`}>
-                <span className={`font-mono text-sm font-bold ${active ? 'text-purple-700 dark:text-purple-300' : 'text-fd-foreground'}`}>
-                  {name}
-                </span>
-                <span className="text-xs text-fd-muted-foreground">{desc}</span>
-                {active && (
-                  <span className="mt-0.5 rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-600 dark:bg-purple-400/15 dark:text-purple-300">
-                    当前主力
-                  </span>
-                )}
-                {upcoming && (
-                  <span className="mt-0.5 rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-600 dark:bg-cyan-400/10 dark:text-cyan-300">
-                    即将推出
-                  </span>
-                )}
-              </div>
-            </ScrollReveal>
-          ))}
+
+        {/* Unified driver model badge */}
+        <div className="mt-5 flex justify-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-300/60 bg-blue-50/60 px-4 py-1.5 text-sm font-semibold text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300">
+            <Cpu className="h-4 w-4" />
+            跨平台统一驱动 API — 应用代码零修改即可迁移芯片
+          </div>
         </div>
-      </section>
 
-      {/* ================================================================
-          Explore — bento grid for everything else
-          ================================================================ */}
-      <section className="w-full max-w-5xl px-4 pb-20 pt-6">
-        <p className="section-eyebrow">探索手册</p>
+        {/* Chip cards — scroll-snap carousel on mobile, grid on desktop */}
+        <div className="mt-8 scroll-carousel">
+          {[
+            {
+              name: 'CSCE250X',
+              core: 'Cortex-M33',
+              freq: '120 MHz',
+              flash: '512 KB',
+              sram: '256+ KB SRAM',
+              features: ['USB PD 3.1', 'eSPI', 'PECI', 'KSCAN', 'I²C×8', 'SPI×4'],
+              use: '高性能笔记本 · Chromebook',
+              tag: '当前主力',
+              tagColor: 'bg-blue-500/15 text-blue-600 dark:bg-blue-400/15 dark:text-blue-300',
+              borderAccent: 'border-blue-400/30 dark:border-blue-500/25',
+              iconColor: 'text-blue-500 dark:text-blue-400',
+              bgAccent: 'from-blue-500/8 to-cyan-400/4',
+            },
+            {
+              name: 'CSCE2010',
+              core: 'Cortex-M0+',
+              freq: '24 MHz',
+              flash: '256 KB',
+              sram: '64 KB SRAM',
+              features: ['I²C×4', 'SPI×2', 'UART×3', 'ADC×8', 'PWM×6'],
+              use: '轻量 EC · 工业嵌入式 · 平板',
+              tag: '低功耗优选',
+              tagColor: 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-300',
+              borderAccent: 'border-emerald-400/30 dark:border-emerald-500/25',
+              iconColor: 'text-emerald-500 dark:text-emerald-400',
+              bgAccent: 'from-emerald-500/8 to-green-400/4',
+            },
+            {
+              name: 'CSCE2520',
+              core: 'Cortex-M33',
+              freq: '120 MHz',
+              flash: '512 KB',
+              sram: '256+ KB SRAM',
+              features: ['USB PD 3.1', 'eSPI', 'PECI', 'KSCAN', 'TrustZone', 'TF-M'],
+              use: '新一代安全 EC · 旗舰笔记本',
+              tag: '即将推出',
+              tagColor: 'bg-purple-500/15 text-purple-600 dark:bg-purple-400/15 dark:text-purple-300',
+              borderAccent: 'border-purple-400/30 dark:border-purple-500/25',
+              iconColor: 'text-purple-500 dark:text-purple-400',
+              bgAccent: 'from-purple-500/8 to-pink-400/4',
+            },
+          ].map(({ name, core, freq, flash, sram, features, use, tag, tagColor, borderAccent, iconColor, bgAccent }, i) => (
+            <ScrollReveal key={name} delay={i * 100}>
+              <div className="card group relative flex h-full flex-col overflow-hidden">
+                <div className={`absolute inset-0 bg-gradient-to-br ${bgAccent} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {exploreCards.map(({ cols, icon: Icon, tag, title, desc, href, time }, i) => (
-            <ScrollReveal key={title} delay={i * 70}>
-              <Link
-                href={href}
-                className={`cyber-card group flex flex-col gap-3 p-5 ${cols ?? ''}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10 ring-1 ring-purple-500/20">
-                    <Icon className="h-4 w-4 text-purple-400 group-hover:text-cyan-400 transition-colors" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {time && (
-                      <span className="flex items-center gap-1 text-[10px] text-fd-muted-foreground">
-                        <Clock className="h-3 w-3" /> {time}
-                      </span>
-                    )}
-                    <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-400">
+                <div className="relative flex flex-col gap-4 p-6">
+                  {/* Header: chip name + badge */}
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Microchip className={`h-5 w-5 ${iconColor}`} />
+                        <h3 className="font-mono text-xl font-extrabold text-fd-foreground">{name}</h3>
+                      </div>
+                      <p className="mt-1 text-sm text-fd-muted-foreground">{core} · {freq}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${tagColor}`}>
                       {tag}
                     </span>
                   </div>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-base font-bold group-hover:text-purple-400 transition-colors">
-                    {title}
-                  </h3>
-                  <p className="mt-1 text-sm text-fd-muted-foreground leading-relaxed">
-                    {desc}
-                  </p>
-                </div>
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-400 group-hover:gap-1.5 transition-all">
-                  阅读 <ArrowRight className="h-3 w-3" />
-                </span>
-              </Link>
-            </ScrollReveal>
-          ))}
-        </div>
-      </section>
 
-      {/* ================================================================
-          Tech Stack — show what this manual covers
-          ================================================================ */}
-      <div className="stats-divider" />
-      <section className="w-full max-w-5xl px-4 py-10">
-        <p className="section-eyebrow text-center">核心技术栈</p>
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {techStack.map(({ icon: Icon, label, desc }) => (
-            <ScrollReveal key={label} delay={40}>
-              <div className="flex flex-col items-center gap-2 rounded-xl border border-purple-200/60 bg-white/30 backdrop-blur-xl shadow-lg border-white/50 p-4 text-center transition-all hover:border-purple-300 hover:shadow-md dark:border-purple-500/15 dark:bg-white/[0.02] dark:backdrop-blur-xl dark:border-white/[0.06] dark:hover:border-purple-400/30 dark:hover:bg-white/[0.04]">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10 ring-1 ring-purple-500/20">
-                  <Icon className="h-5 w-5 text-purple-500 dark:text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-fd-foreground">{label}</p>
-                  <p className="text-xs text-fd-muted-foreground">{desc}</p>
+                  {/* Spec bar: Flash + RAM */}
+                  <div className="flex gap-3">
+                    <div className="flex-1 rounded-lg bg-blue-500/5 px-3 py-2 text-center dark:bg-white/[0.03]">
+                      <p className="text-[10px] uppercase tracking-wider text-fd-muted-foreground">Flash</p>
+                      <p className="font-mono text-sm font-bold text-fd-foreground">{flash}</p>
+                    </div>
+                    <div className="flex-1 rounded-lg bg-blue-500/5 px-3 py-2 text-center dark:bg-white/[0.03]">
+                      <p className="text-[10px] uppercase tracking-wider text-fd-muted-foreground">SRAM</p>
+                      <p className="font-mono text-sm font-bold text-fd-foreground">{sram}</p>
+                    </div>
+                  </div>
+
+                  {/* Feature chips */}
+                  <div>
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-fd-muted-foreground">关键外设</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {features.map(f => (
+                        <span key={f} className="rounded-md border border-blue-200/40 bg-blue-500/5 px-2 py-0.5 text-xs font-medium text-fd-foreground dark:border-blue-500/15 dark:bg-white/[0.04]">
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Use case */}
+                  <div className="flex items-center gap-2 rounded-lg bg-blue-500/5 px-3 py-2 dark:bg-white/[0.03]">
+                    <Laptop className="h-4 w-4 shrink-0 text-fd-muted-foreground" />
+                    <span className="text-xs text-fd-muted-foreground">{use}</span>
+                  </div>
                 </div>
               </div>
             </ScrollReveal>
           ))}
         </div>
+
+        {/* Cross-platform code reuse highlight */}
+        <div className="mt-8 overflow-hidden rounded-2xl border border-neutral-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-6 dark:border-neutral-800 dark:from-blue-950/20 dark:to-cyan-950/20">
+          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-500/15 ring-1 ring-blue-500/25">
+              <GitBranch className="h-6 w-6 text-blue-500 dark:text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-extrabold text-fd-foreground">一套代码，三款芯片</h3>
+              <p className="mt-1 text-sm leading-relaxed text-fd-muted-foreground">
+                芯海全系 EC 芯片共享同一套 Zephyr 驱动模型和 HAL 抽象层。应用层代码（电源管理、热管理、PD 协议栈等 15 个模块）<strong className="text-fd-foreground">无需任何修改</strong>即可在 CSCE250X、CSCE2010、CSCE2520 之间迁移。
+                芯片差异仅在 Device Tree 和 Kconfig 中配置，由 Zephyr 驱动框架在编译时自动适配。
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
+      </div>
+      </div>
 
       {/* ================================================================
-          Highlights — why this manual
+          Use Cases — alternating band
           ================================================================ */}
-      <section className="w-full max-w-5xl px-4 pb-20 pt-4">
-        <p className="section-eyebrow text-center">手册亮点</p>
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {highlights.map(({ icon: Icon, title, desc }, i) => (
-            <ScrollReveal key={title} delay={i * 70}>
-              <div className="group flex flex-col gap-3 overflow-hidden rounded-xl border border-purple-200/60 bg-white/30 backdrop-blur-xl shadow-lg border-white/50 pt-5 transition-all hover:border-purple-300 hover:shadow-md dark:border-purple-500/15 dark:bg-white/[0.02] dark:backdrop-blur-xl dark:border-white/[0.06] dark:hover:border-purple-400/30 dark:hover:bg-white/[0.04]">
-                <div className="mx-5 flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10 ring-1 ring-purple-500/20">
-                  <Icon className="h-5 w-5 text-purple-500 transition-colors group-hover:text-purple-600 dark:text-purple-400 dark:group-hover:text-cyan-400" />
+      <div className="section-band section-band-alt">
+      <div className="section-band-inner">
+      <section>
+        <p className="section-eyebrow text-center">典型应用场景</p>
+        <p className="mt-1 text-center text-sm text-fd-muted-foreground">
+          从消费电子到工业嵌入式，芯海 Zephyr EC 覆盖全场景需求
+        </p>
+        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          {useCases.map(({ icon: Icon, title, desc, chips }, i) => (
+            <ScrollReveal key={title} delay={i * 80}>
+              <div className="card group flex h-full gap-4 p-5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 ring-1 ring-blue-500/20">
+                  <Icon className="h-6 w-6 text-blue-500 transition-colors group-hover:text-blue-600 dark:text-blue-400 dark:group-hover:text-cyan-400" />
                 </div>
-                <div className="px-5 pb-5">
-                  <h3 className="text-base font-bold text-fd-foreground">{title}</h3>
+                <div className="flex flex-1 flex-col">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-fd-foreground">{title}</h3>
+                    <span className="rounded-full bg-blue-500/8 px-2 py-0.5 text-[10px] font-medium text-blue-500 dark:text-blue-400">{chips}</span>
+                  </div>
                   <p className="mt-1.5 text-sm leading-relaxed text-fd-muted-foreground">{desc}</p>
                 </div>
-                <div className="h-[3px] w-full bg-gradient-to-r from-purple-400 to-cyan-400 opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
             </ScrollReveal>
           ))}
         </div>
       </section>
+      </div>
+      </div>
+
+      {/* ================================================================
+          Dev Flow — alternating band
+          ================================================================ */}
+      <div className="section-band section-band-alt">
+      <div className="section-band-inner">
+      <section>
+        <p className="section-eyebrow text-center">开发全流程</p>
+        <p className="mt-1 text-center text-sm text-fd-muted-foreground">
+          从环境搭建到量产部署，芯海 Zephyr EC 开发的完整流水线
+        </p>
+        <div className="mt-8 flex flex-col gap-0 sm:flex-row sm:gap-0">
+          {devFlow.map(({ icon: Icon, step, title, desc }, i) => (
+            <ScrollReveal key={step} delay={i * 80}>
+              <div className="group relative flex flex-1 flex-col items-center gap-3 px-3 py-5 text-center">
+                {/* Connector line between steps */}
+                {i < devFlow.length - 1 && (
+                  <div className="absolute left-[60%] top-10 hidden h-0.5 w-full bg-gradient-to-r from-blue-300 to-blue-100 sm:block dark:from-blue-500/40 dark:to-blue-500/10" />
+                )}
+                {/* Step number badge */}
+                <span className="relative z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white shadow-md shadow-blue-500/25">
+                  {step}
+                </span>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 ring-1 ring-blue-500/20">
+                  <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-fd-foreground">{title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-fd-muted-foreground">{desc}</p>
+                </div>
+              </div>
+            </ScrollReveal>
+          ))}
+        </div>
+      </section>
+      </div>
+      </div>
+
+      {/* ================================================================
+          Delivery — what you get with Chipsea
+          ================================================================ */}
+      <div className="section-band section-band-alt">
+      <div className="section-band-inner">
+      <section>
+        <p className="section-eyebrow text-center">交付能力</p>
+        <p className="mt-1 mb-8 text-center text-base text-fd-muted-foreground">
+          不只是芯片 —— 客户获得的是从文档、工具到量产支持的一站式交付体系
+        </p>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {highlights.map(({ icon: Icon, title, desc }, i) => (
+            <ScrollReveal key={title} delay={i * 70}>
+              <div className="card group flex h-full flex-col overflow-hidden pt-5">
+                <div className="mx-5 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 ring-1 ring-blue-500/20">
+                  <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                </div>
+                <div className="flex flex-1 flex-col px-5 pb-5">
+                  <h3 className="text-base font-bold text-fd-foreground">{title}</h3>
+                  <p className="mt-1.5 flex-1 text-sm leading-relaxed text-fd-muted-foreground">{desc}</p>
+                </div>
+                <div className="mt-auto h-[3px] w-full shrink-0 bg-gradient-to-r from-blue-400 to-cyan-400 opacity-0 transition-opacity group-hover:opacity-100" />
+              </div>
+            </ScrollReveal>
+          ))}
+        </div>
+      </section>
+      </div>
+      </div>
 
       <footer className="page-footer w-full">
         版权所有 &copy; {new Date().getFullYear()}{' '}Chipsea. &nbsp;|&nbsp; Powered by Zephyr RTOS &amp; Fumadocs

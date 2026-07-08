@@ -1,5 +1,5 @@
 {
   "title": "Chipsea Zephyr EC Manual",
   "root": true,
-  "pages": ["getting-started", "development", "porting", "best-practices", "reference"]
+  "pages": ["getting-started", "development", "porting", "best-practices", "reference", "qa"]
 }
