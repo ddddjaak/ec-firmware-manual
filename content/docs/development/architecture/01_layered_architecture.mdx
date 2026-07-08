@@ -27,7 +27,7 @@ title: 架构分层模型
   end
 
   subgraph hw[" 硬件层 Hardware "]
-    D1["CSCE250X MCU (ARM Cortex-M33)"]
+    D1["芯海 EC 芯片 (Cortex-M33/M0+)"]
   end
 
   app --> svc
@@ -61,7 +61,7 @@ title: 架构分层模型
   end
 
   subgraph hw[" 硬件层 Hardware "]
-    D1["CSCE250X MCU (ARM Cortex-M33)"]
+    D1["芯海 EC 芯片 (Cortex-M33/M0+)"]
   end
 
   app --> svc
@@ -77,7 +77,7 @@ title: 架构分层模型
 
 - **应用层**：实现 EC 业务逻辑，包含电源管理、键盘主机接口、热管理、电池/充电、PD 管理、外设管理、调试等 13 个子模块
 - **服务层**：基于 Zephyr 内核封装的任务调度、消息系统、日志框架和 OTA 升级机制
-- **驱动层**：基于 Zephyr 设备驱动模型，对 CSCE250X 片上外设进行抽象封装，涵盖通用接口驱动（GPIO、I2C、SPI、USB 等）和 EC 专用驱动（键盘扫描、风扇、eSPI、PECI 等），共 18 个模块
-- **硬件层**：CSCE250X 芯片本身，含 ARM Cortex-M33 内核及片上外设
+- **驱动层**：基于 Zephyr 设备驱动模型，对芯海 EC 芯片片上外设进行抽象封装，涵盖通用接口驱动（GPIO、I2C、SPI、USB 等）和 EC 专用驱动（键盘扫描、风扇、eSPI、PECI 等），共 18 个模块
+- **硬件层**：芯海 EC 芯片（CSCE2010/CSCE250X/CSCE2520 等），含 ARM Cortex-M33/M0+ 内核及片上外设
 
 > 各模块的详细功能与使用方法见 [固件功能模块说明](/docs/development/modules/01_system_infrastructure)。

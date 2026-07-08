@@ -11,6 +11,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  transpilePackages: ['flexsearch'],
 };
 
 export default withMDX(nextConfig);

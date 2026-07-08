@@ -2,32 +2,32 @@ import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 
 export const baseOptions: BaseLayoutProps = {
   nav: {
-    title: 'Chipsea Zephyr EC Manual',
+    title: '芯海 Zephyr EC 方案',
     url: '/',
   },
   links: [
     {
-      text: 'Getting Started',
+      text: '快速上手',
       url: '/docs/getting-started',
       active: 'nested-url',
     },
     {
-      text: 'Development',
+      text: '开发指南',
       url: '/docs/development',
       active: 'nested-url',
     },
     {
-      text: 'Porting',
+      text: '移植指南',
       url: '/docs/porting',
       active: 'nested-url',
     },
     {
-      text: 'Best Practices',
+      text: '最佳实践',
       url: '/docs/best-practices',
       active: 'nested-url',
     },
     {
-      text: 'Reference',
+      text: '参考',
       url: '/docs/reference',
       active: 'nested-url',
     },

@@ -52,7 +52,7 @@ west build -t rom_report
 ### 烧录固件
 
 1. 安装 J-Link 开发包 + Chipsea 芯片开发包
-2. 打开 J-Flash，选择 **CSCE250X** 设备
+2. 打开 J-Flash，选择对应芯片设备（如 **CSCE250X**）
 3. 导入 `build/ec_fw/APROM.hex`
 4. 点击烧录，等待完成
 5. 打开 J-Link RTT Viewer 查看 Zephyr 启动日志

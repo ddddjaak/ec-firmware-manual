@@ -27,6 +27,7 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "playwright": "^1.61.1",
     "tailwindcss": "latest",
     "typescript": "latest"
   }
