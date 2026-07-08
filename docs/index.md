@@ -8,7 +8,7 @@ hide:
 
 <span class="hero-chip-label">CSCE250X · Cortex-M33 · Zephyr 3.7.0</span>
 
-# Chipsea Zephyr EC Manual
+# 芯海 Zephyr EC 开发手册
 
 <div class="hero-divider"></div>
 
