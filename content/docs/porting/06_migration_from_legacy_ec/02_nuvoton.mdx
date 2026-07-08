@@ -1,0 +1,256 @@
+---
+title: 从 Nuvoton NPCX 迁移
+---
+
+Nuvoton NPCX 系列（NPCX5xx/7xx/9xx）是 Chromebook 和笔记本市场中广泛使用的 EC 芯片。与 ITE C51 平台不同，NPCX 基于 **ARM Cortex-M4** 内核，因此从 NPCX 迁移到 Chipsea CSCE250X（同样 ARM 架构）的难度显著低于 C51 平台迁移。
+
+## 架构差异
+
+虽然同为 ARM 架构，但 Nuvoton 和 Zephyr 在软件层面存在根本性差异：
+
+| 维度 | Nuvoton NPCX | Chipsea CSCE250X |
+|------|-------------|-------------------|
+| CPU 内核 | Cortex-M4 | Cortex-M33 |
+| 频率 | 48–100 MHz | 120 MHz |
+| SRAM | 64–256 KB | 256+ KB |
+| Flash | 512 KB–1 MB | 512 KB |
+| RTOS | 裸机 / FreeRTOS（可选） | Zephyr RTOS |
+| 驱动模型 | Nuvoton BSP HAL 库（`nuvoton-hal`） | Zephyr 标准驱动模型 |
+| 硬件配置 | 头文件宏（`board.h`）+ 寄存器写 | 设备树（DTS）+ Kconfig |
+| 引脚配置 | `SYS_GPA_MFPL` 等寄存器直接配置 | Zephyr pinctrl |
+| 构建系统 | GCC + Makefile / IAR | CMake + west |
+| eSPI | Nuvoton 私有 eSPI HAL | Zephyr eSPI 驱动框架 |
+| 调试 | SWD + printf | SWD + Shell + Logging + SystemView |
+
+## 核心迁移差异
+
+与 ITE C51 迁移相比，Nuvoton 迁移的主要差异在于：
+
+### 不需要处理的问题
+
+- **内存模型转换**：同为 ARM Von Neumann 架构，无需处理 Bank 切换、CODE/XDATA 分离
+- **位宽适配**：同为 32 位，无需处理 8 位→32 位的数据类型转换
+- **结构体对齐**：ARM→ARM，对齐规则一致
+- **中断系统**：同为 NVIC，无需重新学习中端分发机制
+
+### 需要重点处理的问题
+
+- **BSP HAL → Zephyr 驱动模型**：这是最大的迁移工作量。Nuvoton 提供 `nuvoton-hal` 库封装寄存器操作，但与 Zephyr 驱动 API 不兼容
+- **引脚配置方式转变**：Nuvoton 通过 `SYS_GPA_MFPL` 等多功能寄存器直接配置引脚，Zephyr 通过 pinctrl 和 DTS 声明式配置
+- **时钟树配置**：Nuvoton 的时钟初始化代码（`clock.c`）需转换为 Zephyr 时钟控制驱动
+- **eSPI 配置**：NPCX 的 eSPI 有专用的配置寄存器组，与 CSCE250X 的 eSPI 控制器寄存器布局不同
+
+## 关键模块迁移对照
+
+### 1. GPIO 与引脚配置
+
+**Nuvoton 侧**（典型的 NPCX BSP 代码）：
+```c
+// board.c — Nuvoton 风格的 GPIO 初始化
+// 配置 GPA0 为输出，GPA1 为输入
+SYS->GPA_MFPL = (SYS->GPA_MFPL & ~(0xF << 0)) | (0x1 << 0);  // GPIO function
+SYS->GPA_MFPL = (SYS->GPA_MFPL & ~(0xF << 4)) | (0x1 << 4);  // GPIO function
+GPIO->PA_OTY = 0x00;        // 推挽输出
+GPIO->PA_DIR = BIT(0);      // PA0 输出
+GPIO->PA_DAT = BIT(0);      // PA0 输出高
+
+// 在其他模块中直接操作寄存器
+#define POWER_LED_ON()    (GPIO->PC_DAT |= BIT(3))
+#define POWER_LED_OFF()   (GPIO->PC_DAT &= ~BIT(3))
+#define POWER_BTN_GET()   ((GPIO->PE_DAT >> 2) & 0x1)
+```
+
+**CSCE250X Zephyr 侧**：
+```dts
+// DTS — 声明式引脚配置
+&pinctrl {
+    power_led_default: power_led_default {
+        group1 {
+            pinmux = <PC3_GPIO>;
+            drive-strength = "medium";
+        };
+    };
+    power_btn_default: power_btn_default {
+        group1 {
+            pinmux = <PE2_GPIO>;
+            bias-pull-up;
+        };
+    };
+};
+```
+
+```c
+// 驱动代码 — 通过标准 API 操作
+#define POWER_LED_NODE DT_ALIAS(power_led)
+static const struct gpio_dt_spec power_led = GPIO_DT_SPEC_GET(POWER_LED_NODE, gpios);
+
+gpio_pin_set_dt(&power_led, 1);  // 亮
+gpio_pin_set_dt(&power_led, 0);  // 灭
+int state = gpio_pin_get_dt(&power_btn);  // 读取
+```
+
+### 2. I2C/SMBus 通信
+
+**Nuvoton 侧**（NPCX BSP）：
+```c
+// Nuvoton I2C HAL 调用
+i2c_init(I2C0, &config);
+i2c_set_frequency(I2C0, 100000);  // 100kHz
+i2c_write_read(I2C0, addr, tx_buf, tx_len, rx_buf, rx_len);
+```
+
+**CSCE250X Zephyr 侧**：
+```dts
+// DTS 中声明 I2C 控制器和外设
+&i2c0 {
+    status = "okay";
+    clock-frequency = <I2C_BITRATE_STANDARD>;
+
+    battery@16 {
+        compatible = "smart-battery";
+        reg = <0x16>;
+    };
+};
+```
+
+```c
+// 使用 Zephyr I2C API
+#include <zephyr/drivers/i2c.h>
+const struct device *i2c_dev = DEVICE_DT_GET(DT_NODELABEL(i2c0));
+i2c_write_read(i2c_dev, 0x16, &cmd, 1, &data, 2);
+```
+
+迁移关键点：Nuvoton 的 I2C 通道编号（I2C0-I2C7）需要映射到 DTS 中对应的 i2c 节点。Nuvoton 的 SMBus 是 I2C 的子集——Zephyr 的 I2C API 完全兼容 SMBus 协议。
+
+### 3. eSPI 主机通信
+
+**Nuvoton 侧**：
+```c
+// Nuvoton eSPI HAL — 手动配置各通道
+espi_init(&espi_config);              // 包含 IO 基址、VW 数量等
+espi_register_vw_handler(vw_callback); // 注册 Virtual Wire 回调
+espi_register_peripheral_handler(peripheral_callback); // 寄存器访问回调
+espi_send_vw(vw_index, data);         // 发送 VW
+```
+
+**CSCE250X Zephyr 侧**：
+```dts
+&espi0 {
+    status = "okay";
+    /* Peripheral Channel 自动处理 0x62/0x66 I/O 周期 */
+    /* Virtual Wire 通道数量由芯片 HAL 定义 */
+};
+```
+
+```c
+// Zephyr eSPI 驱动框架
+#include <zephyr/drivers/espi.h>
+const struct device *espi_dev = DEVICE_DT_GET(DT_NODELABEL(espi0));
+
+// VW 回调通过 espi driver API 注册
+espi_add_callback(espi_dev, espi_vw_handler, ESPI_BUS_EVENT_VWIRE_RECEIVED);
+
+// 发送 VW
+struct espi_vw_packet vw = { .index = ESPI_VW_PLTRST, .val = 1 };
+espi_send_vw(espi_dev, &vw);
+```
+
+### 4. 键盘扫描
+
+**Nuvoton 侧**：NPCX 通常内置硬件键盘扫描控制器（KSC），通过配置寄存器设定矩阵尺寸、扫描频率和去抖时间。
+
+**CSCE250X Zephyr 侧**：键盘矩阵配置在 DTS 中声明，扫描由 `kscan` 驱动完成。
+
+```dts
+&kbs_matrix {
+    status = "okay";
+    row-gpios = <&gpioa 0 GPIO_ACTIVE_LOW>, <&gpioa 1 GPIO_ACTIVE_LOW>,
+                /* ... 共 8 行 */
+    col-gpios = <&gpiob 0 GPIO_ACTIVE_LOW>, <&gpiob 1 GPIO_ACTIVE_LOW>,
+                /* ... 共 18 列 */
+    debounce-time-us = <5000>;
+};
+```
+
+### 5. 电源序列
+
+Nuvoton NPCX 固件中的电源序列通常也是表驱动的，结构类似于 ITE 但使用更现代的 C 代码：
+
+**Nuvoton 侧**：
+```c
+// board_power.c — 典型的电源序列
+const power_step_t s5_to_s0_seq[] = {
+    { POWER_SET,  SIGNAL_3V3_EN,   0   },
+    { POWER_WAIT, SIGNAL_3V3_PGOOD, 50 },
+    { POWER_SET,  SIGNAL_5V_EN,    10  },
+    { POWER_SET,  SIGNAL_RSMRST,   5   },
+    // ...
+    { POWER_END,  0, 0 }
+};
+```
+
+**CSCE250X Zephyr 侧**：语法不同但概念一致——同样是步骤数组，使用 `POWER_SIGNAL()` 宏替代直接信号操作。
+
+```c
+const power_seq_struct s5_to_s0[] = {
+    { POWER_SIGNAL(SIGNAL_3V3_EN),      SET, 0   },
+    { POWER_SIGNAL(SIGNAL_3V3_PGOOD),   WAIT, 50 },
+    { POWER_SIGNAL(SIGNAL_5V_EN),       SET, 10  },
+    // ...
+    { SEQ_END, 0, 0 }
+};
+```
+
+### 6. PWM 风扇控制
+
+**Nuvoton 侧**：通过配置 PWM 模块的预分频器、周期寄存器和占空比寄存器。
+
+**CSCE250X Zephyr 侧**：PWM 配置在 DTS 中声明，驱动代码通过 Zephyr PWM API 控制。
+
+```dts
+&pwm0 {
+    status = "okay";
+    pinctrl-0 = <&pwm0_default>;
+    pinctrl-names = "default";
+};
+```
+
+```c
+#include <zephyr/drivers/pwm.h>
+const struct device *pwm_dev = DEVICE_DT_GET(DT_NODELABEL(pwm0));
+pwm_set_dt(&pwm_spec, period_ns, pulse_ns);
+```
+
+## 分阶段迁移策略（Nuvoton 特化版）
+
+与 ITE 迁移相同的 6 阶段框架，但各阶段工作量不同：
+
+| 阶段 | 与 ITE 迁移的差异 | 预计耗时 |
+|------|------------------|----------|
+| 1: 最小启动 | 时钟配置迁移更直接（ARM→ARM） | 0.5-1 天 |
+| 2: GPIO 控制 | 寄存器宏→pinctrl DTS，但无需处理 C51 的端口映射 | 0.5-1 天 |
+| 3: I2C/SMBus | Nuvoton HAL API→Zephyr I2C API，映射关系较直接 | 1 天 |
+| 4: 电源序列 | 表驱动→表驱动，结构相似，主要工作是信号名映射 | 2-3 天 |
+| 5: 键盘+通信 | eSPI 配置从 Nuvoton 私有 HAL 转为 Zephyr 驱动 | 2-3 天 |
+| 6: 完整集成 | 业务逻辑可以较高比例复用 | 3-5 天 |
+
+**总预计耗时**：9-14 天（约为 ITE C51 迁移的 50–60%）。
+
+## Nuvoton 迁移特有注意事项
+
+1. **FreeRTOS → Zephyr**：部分 NPCX 固件已使用 FreeRTOS，任务模型（线程/队列/信号量）概念相似但 API 不同。注意优先级映射——FreeRTOS 0 最低优先级，Zephyr 0 最高优先级。
+
+2. **Chromium EC 代码复用**：如果你的 NPCX 固件基于 Chromium OS EC，其中有大量 `common/` 下的芯片无关代码。这些代码在与 Zephyr 对接时需注意原有 API（`crec_*` 前缀）与 Zephyr API 的差异。
+
+3. **Flash 布局差异**：NPCX 的 Flash 布局（RO/RW 分区位置、Flash 页大小）与 CSCE250X 不同，MCUboot 配置和 OTA 分区表需重新规划。
+
+4. **Nuvoton 特有外设**：
+   - **VCI (Virtual Control Interface)**：NPCX 的部分型号有 VCI 接口用于与 GSC/TCG 安全芯片通信。CSCE250X 需评估是否需要等效接口。
+   - **PECI**：NPCX 内置 PECI 控制器，CSCE250X 同样支持，但寄存器接口不同。
+   - **WDT 行为**：Nuvoton WDT 的复位行为（全芯片复位 vs CPU 复位）与 CSCE250X 可能有差异。
+
+5. **从 NuMicro SDK 迁移的路径选择**：如果原固件大量使用 NuMicro SDK（BSP 级 HAL），有两种策略：
+   - **完全重写**（推荐）：用 Zephyr 驱动 API 重写所有外设访问，长期维护成本最低
+   - **适配层**（过渡方案）：写一层薄适配将 Nuvoton HAL API 映射到 Zephyr API，适合快速验证但不应作为最终方案
+
+> **参考**：通用迁移流程和分阶段策略详见 [新平台移植流程](/ec-firmware-manual/docs/porting/01_porting_guide)。

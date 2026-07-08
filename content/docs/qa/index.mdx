@@ -1,0 +1,108 @@
+﻿---
+title: 常见问题
+---
+
+Zephyr EC 固件开发中的常见问题诊断与排查指南——12 个方向，三类场景，按需查阅。
+
+## 硬件与接口
+
+芯片引脚、总线通信、外设驱动——物理层的调试问题。
+
+<div className="qa-mini-grid">
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/01_battery_and_power" style={{"borderColor":"rgba(239,68,68,0.15)","background":"rgba(239,68,68,0.02)"}}>🔋 电池与电源</a>
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/02_communication_protocols" style={{"borderColor":"rgba(239,68,68,0.15)","background":"rgba(239,68,68,0.02)"}}>🔌 通信协议</a>
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/03_peripherals_and_input" style={{"borderColor":"rgba(239,68,68,0.15)","background":"rgba(239,68,68,0.02)"}}>⌨️ 外设与输入</a>
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/08_usb_and_pd" style={{"borderColor":"rgba(239,68,68,0.15)","background":"rgba(239,68,68,0.02)"}}>🔌 USB & PD</a>
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/12_gpio_and_pinmux" style={{"borderColor":"rgba(239,68,68,0.15)","background":"rgba(239,68,68,0.02)"}}>📌 GPIO / Pinmux</a>
+
+</div>
+
+## 系统与运行时
+
+Hard Fault、中断延迟、EC-Host 交互——运行时行为和系统级异常。
+
+<div className="qa-mini-grid">
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/05_runtime_crash" style={{"borderColor":"rgba(139,92,246,0.15)","background":"rgba(139,92,246,0.02)"}}>🧠 运行时异常</a>
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/11_interrupt_and_timing" style={{"borderColor":"rgba(139,92,246,0.15)","background":"rgba(139,92,246,0.02)"}}>⚡ 中断与时延</a>
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/10_ec_host_interaction" style={{"borderColor":"rgba(139,92,246,0.15)","background":"rgba(139,92,246,0.02)"}}>🖥️ EC-Host 交互</a>
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/09_thermal_management" style={{"borderColor":"rgba(139,92,246,0.15)","background":"rgba(139,92,246,0.02)"}}>🌡️ 热管理</a>
+
+</div>
+
+## 工程与流程
+
+编译、烧录、测试、CI——工程层面的问题排查。
+
+<div className="qa-mini-grid">
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/04_build_and_config" style={{"borderColor":"rgba(245,158,11,0.15)","background":"rgba(245,158,11,0.02)"}}>⚙️ 构建与配置</a>
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/06_firmware_upgrade" style={{"borderColor":"rgba(245,158,11,0.15)","background":"rgba(245,158,11,0.02)"}}>🔄 固件升级</a>
+
+<a className="qa-mini-card" href="/ec-firmware-manual/docs/qa/07_test_and_ci" style={{"borderColor":"rgba(245,158,11,0.15)","background":"rgba(245,158,11,0.02)"}}>🧪 测试与 CI</a>
+
+</div>
+
+---
+
+## 通用问答
+
+以下是不属于特定调试方向的通用问题，适合首次接触 Zephyr EC 时阅读。
+
+### Q: Zephyr EC 固件支持哪些芯片？
+
+当前支持 **CSCE250X**（Cortex-M33 高性能 EC）和 **CSCE2010**（Cortex-M0+ 轻量 EC），**CSCE2520**（新一代 EC，带 TrustZone）即将推出。所有平台共享同一套 Zephyr 驱动模型，代码可直接复用。
+
+### Q: 不同芯片之间代码是否兼容？
+
+是的。芯海 Zephyr EC 方案采用统一驱动模型，上层应用代码完全平台无关。芯片差异通过 Device Tree 和 Kconfig 配置管理，无需修改应用逻辑。
+
+### Q: 开发环境需要哪些工具？
+
+- **编译器**：ARM GNU Toolchain (`arm-none-eabi-gcc`)
+- **构建系统**：West（Zephyr 元工具）+ CMake + Ninja
+- **调试器**：J-Link（推荐）或 pyOCD
+- **串口工具**：minicom / screen / PuTTY
+- **SDK**：Zephyr SDK 或独立工具链 + Python 3.10+
+
+详见 [环境搭建](/docs/getting-started/01_setup)。
+
+### Q: 如何选择正确的 Board Target？
+
+```bash
+# 查看支持的板子列表
+west boards | grep csce
+
+# 典型目标
+west build -b csce250x_evb app/ec-firmware      # CSCE250X 评估板
+west build -b csce2010_evb app/ec-firmware      # CSCE2010 评估板
+```
+
+### Q: 烧录失败怎么办？
+
+1. 检查 J-Link / 调试器连接（USB 线、驱动）
+2. 确认芯片未处于写保护状态
+3. 尝试降低 SWD 速度：`west flash --runner jlink -- --speed 1000`
+4. 检查芯片型号是否正确：`JLinkExe -device CSCE250X`
+
+### Q: 如何降低功耗？
+
+详见 [功耗优化指南](/docs/best-practices/02_power_optimization)。核心手段：
+
+- 使能 Zephyr PM 框架，利用深度睡眠模式
+- 关闭未使用外设的时钟
+- 降低传感器采样频率
+- 使用 DMA 代替 CPU 轮询
+
+---
+
+> **持续更新中**：如果你遇到新问题，欢迎反馈。我们会持续补充 Q&A 内容。

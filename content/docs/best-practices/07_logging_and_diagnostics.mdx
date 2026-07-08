@@ -1,0 +1,190 @@
+---
+title: 日志与诊断策略（Logging & Diagnostics）
+---
+
+合理的日志策略是 EC 调试效率的关键。日志太少无法定位问题，太多则占用资源、干扰实时性。本章提供 EC 场景下的分层日志方案。
+
+## LOG_LEVEL 分层策略
+
+Zephyr 提供 4 级日志等级。EC 开发中建议按编译配置切换：
+
+```c
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(ec_battery, LOG_LEVEL_INF);
+```
+
+| 等级 | 用法 | Debug Build | Release Build |
+|------|------|-------------|---------------|
+| `LOG_ERR` | 硬件错误、断言失败、不可恢复异常 | ✓ 始终开启 | ✓ 始终开启 |
+| `LOG_WRN` | 恢复性错误、降级运行、配置警告 | ✓ 始终开启 | ✓ 始终开启 |
+| `LOG_INF` | 关键状态变更（AC 插入、休眠唤醒） | ✓ 始终开启 | 按需关闭 |
+| `LOG_DBG` | 详细调试信息（寄存器值、中间状态） | ✓ 开启 | ✗ 关闭 |
+
+**生产固件（Release）推荐配置**：
+
+```kconfig
+# prj_release.conf
+CONFIG_LOG=y
+CONFIG_LOG_MODE_MINIMAL=y          # 最小化 LOG 开销
+CONFIG_LOG_DEFAULT_LEVEL=3         # 0=ERR, 1=WRN, 2=INF, 3=DBG
+CONFIG_LOG_OVERRIDE_LEVEL=3        # 允许模块覆盖等级
+
+# 关闭调试日志，仅保留 ERR+WRN
+CONFIG_LOG_PROCESS_THREAD_STARTUP_DELAY_MS=0
+CONFIG_LOG_BUFFER_SIZE=1024        # 减小日志 buffer
+```
+
+**开发固件（Debug Build）推荐**：
+```kconfig
+CONFIG_LOG=y
+CONFIG_LOG_MODE_DEFERRED=y         # 异步日志，低延迟
+CONFIG_LOG_DEFAULT_LEVEL=4         # 全部开启
+CONFIG_LOG_PRINTK=y                # printk 重定向到 LOG
+```
+
+## 模块化日志注册
+
+每个 `.c` 文件独立注册 LOG 模块，便于按模块过滤：
+
+```c
+/* battery.c */
+LOG_MODULE_REGISTER(battery, LOG_LEVEL_INF);
+
+/* keyboard.c */
+LOG_MODULE_REGISTER(kbd, LOG_LEVEL_DBG);      // 键盘需要更详细日志
+
+/* charger.c */
+LOG_MODULE_REGISTER(charger, LOG_LEVEL_ERR);   // 充电正常时仅记录错误
+```
+
+## 运行时动态日志控制
+
+通过 Shell 命令实时调整日志等级，无需重新编译：
+
+```bash
+# 列出所有日志模块
+uart:~$ log list
+
+# 临时打开充电模块的调试日志
+uart:~$ log enable dbg charger
+
+# 关闭某模块日志
+uart:~$ log disable battery
+
+# 查看当前日志状态
+uart:~$ log status
+```
+
+需要开启的 Kconfig：
+```kconfig
+CONFIG_LOG=y
+CONFIG_LOG_CMDS=y             # 启用 Shell 日志命令
+CONFIG_LOG_RUNTIME_FILTER=y   # 运行时过滤
+```
+
+## 关键事件的日志规范
+
+EC 中以下事件必须记录（最小日志集）：
+
+```c
+/* 电源状态变更 */
+LOG_INF("Power state: S%d -> S%d", old_state, new_state);
+
+/* 充电状态变更 */
+LOG_INF("Charger: AC %s, charge %s",
+        ac_present ? "plugged" : "unplugged",
+        charging ? "started" : "stopped");
+
+/* 异常状态 */
+LOG_WRN("Battery temperature %d°C exceeds threshold %d°C",
+        temp, threshold);
+LOG_ERR("I2C transfer failed on bus %d, addr 0x%02x, err %d",
+        bus, addr, ret);
+
+/* 固件版本信息（启动时打印一次）*/
+LOG_INF("EC FW v%d.%d.%d-%s built %s",
+        MAJOR, MINOR, PATCH, GIT_HASH, __DATE__);
+```
+
+## 日志性能考虑
+
+日志对实时性有直接影响。EC 场景下的优化建议：
+
+```c
+/* ✗ 避免 — 高频 ISR 中打日志 */
+void kbd_isr() {
+    LOG_DBG("Key press: row=%d col=%d", row, col);  // 8ms 周期 × 每次按键
+}
+
+/* ✓ 改在低优先级线程中打印 */
+void kbd_isr() {
+    k_msgq_put(&log_queue, &key_event, K_NO_WAIT);
+}
+
+/* ✓ 使用 compile-time 条件编译 */
+#if CONFIG_LOG_LEVEL >= LOG_LEVEL_DBG
+    LOG_DBG("Reg dump: %02x %02x %02x %02x", r0, r1, r2, r3);
+#endif
+```
+
+**性能基准**（Cortex-M33 @ 96MHz）：
+| 日志方式 | 单条耗时 | 适用场景 |
+|----------|----------|----------|
+| Immediate mode (`CONFIG_LOG_MODE_IMMEDIATE`) | ~50μs | 调试 crash 前最后日志 |
+| Deferred mode (`CONFIG_LOG_MODE_DEFERRED`) | ~5μs | 生产环境首选 |
+| `printk()` | ~200μs | 极早期启动（LOG 框架未就绪）|
+
+**推荐**：生产固件使用 Deferred mode，将格式化输出交给低优先级 LOG 线程。
+
+## 诊断信息收集
+
+当现场出现问题时，需要快速收集诊断信息：
+
+```c
+/* 实现统一的诊断信息 dump 函数 */
+int cmd_diagnostic_dump(void) {
+    LOG_INF("=== EC Diagnostic Dump ===");
+    LOG_INF("Reset reason: 0x%08x", get_reset_reason());
+    LOG_INF("Uptime: %d seconds", k_uptime_get() / 1000);
+
+    /* 关键模块状态 */
+    battery_dump_status();
+    charger_dump_status();
+    thermal_dump_status();
+
+    /* 内存状态 */
+    LOG_INF("Heap free: %d bytes", k_heap_get_free(&sys_heap));
+    return 0;
+}
+
+/* 注册为 Shell 命令 */
+SHELL_CMD_REGISTER(diag, NULL, "Dump diagnostic info", cmd_diagnostic_dump);
+```
+
+## 远程日志
+
+量产设备无 UART 输出时，需通过 Host 通道获取日志：
+
+```c
+/* 通过 Host Command 或 Shared Memory 传递日志 ring buffer */
+static char log_ringbuf[4096];
+static uint16_t log_wr_idx;
+
+void ec_log_to_host(const char *msg) {
+    // 写入 ring buffer，Host 通过 ACPI 方法读取
+    int len = snprintf(&log_ringbuf[log_wr_idx],
+                       sizeof(log_ringbuf) - log_wr_idx,
+                       "[%d] %s\n", k_uptime_get(), msg);
+    log_wr_idx = (log_wr_idx + len) % sizeof(log_ringbuf);
+}
+```
+
+## 验证清单
+
+- [ ] 每个 `.c` 文件独立注册 `LOG_MODULE_REGISTER`
+- [ ] 关键状态变更使用 `LOG_INF`，异常使用 `LOG_ERR`/`LOG_WRN`
+- [ ] ISR 中无耗时日志调用
+- [ ] Shell 中 `log list` 可查看所有模块状态
+- [ ] Production build 关闭 `LOG_DBG`，使用 Deferred mode
+- [ ] 实现了 `diag` dump 命令用于现场诊断
+- [ ] 日志不泄露敏感信息（序列号、密钥等）

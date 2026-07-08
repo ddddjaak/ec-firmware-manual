@@ -1,0 +1,191 @@
+---
+title: 驱动开发规范（Driver Development Guidelines）
+---
+
+Zephyr 设备驱动模型是 EC 固件开发的基石。遵循统一的驱动规范可确保代码可读、可测试、可移植。
+
+## 驱动结构模板
+
+一个标准的 Zephyr 驱动至少包含以下组成部分：
+
+```c
+/* driver/my_sensor/my_sensor.c */
+
+#define DT_DRV_COMPAT vendor_my_sensor    // ① 定义 compatible 宏
+
+#include <zephyr/drivers/sensor.h>        // ② 引入子系统 API
+#include <zephyr/pm/device.h>             // ③ 电源管理支持
+
+struct my_sensor_data {                   // ④ 实例数据（每设备独有）
+    const struct device *i2c;
+    uint8_t sample_rate;
+};
+
+struct my_sensor_config {                 // ⑤ 配置数据（ROM, DT 提供）
+    uint16_t i2c_addr;
+    uint8_t int_gpio;
+};
+
+static int my_sensor_sample_fetch(const struct device *dev,
+                                   enum sensor_channel chan) {
+    struct my_sensor_data *data = dev->data;
+    // ⑥ 实现子系统 API
+    return 0;
+}
+
+static const struct sensor_driver_api my_sensor_api = {
+    .sample_fetch = my_sensor_sample_fetch,
+};
+
+static int my_sensor_init(const struct device *dev) {
+    // ⑦ 初始化逻辑
+    return 0;
+}
+
+#ifdef CONFIG_PM_DEVICE
+static int my_sensor_pm_action(const struct device *dev,
+                                enum pm_device_action action) {
+    // ⑧ 电源管理回调
+    return 0;
+}
+#endif
+
+#define MY_SENSOR_DEFINE(inst)                                        \
+    static struct my_sensor_data my_sensor_data_##inst;               \
+    static const struct my_sensor_config my_sensor_config_##inst = {  \
+        .i2c_addr = DT_INST_REG_ADDR(inst),                           \
+        .int_gpio = DT_INST_GPIOS_CELL(inst, int_gpios, gpio_pin),   \
+    };                                                                \
+    PM_DEVICE_DT_INST_DEFINE(inst, my_sensor_pm_action);              \
+    DEVICE_DT_INST_DEFINE(inst, my_sensor_init,                       \
+        PM_DEVICE_DT_INST_GET(inst),                                  \
+        &my_sensor_data_##inst, &my_sensor_config_##inst,             \
+        POST_KERNEL, CONFIG_SENSOR_INIT_PRIORITY,                     \
+        &my_sensor_api);
+
+DT_INST_FOREACH_STATUS_OKAY(MY_SENSOR_DEFINE)
+```
+
+## 错误处理约定
+
+Zephyr 内核 API 统一使用负数 errno 返回错误码。驱动层应遵循相同约定：
+
+```c
+/* ✓ 正确 — 返回 -errno */
+if (!device_is_ready(i2c_dev)) {
+    return -ENODEV;
+}
+if (i2c_write(i2c_dev, buf, len, addr)) {
+    return -EIO;
+}
+
+/* ✗ 错误 — 返回正数或自定义码 */
+return 1;                    // 上层无法判断错误类型
+return MY_ERR_BUS_FAIL;      // 非标准，难以统一处理
+```
+
+**常用 errno 选择指南**：
+
+| errno | 使用场景 |
+|-------|----------|
+| `-EINVAL` | 参数非法 |
+| `-ENODEV` | 设备未就绪 / 不存在 |
+| `-EIO` | I/O 操作失败（I2C/SPI 传输错误）|
+| `-ENOTSUP` | 不支持的操作或配置 |
+| `-EBUSY` | 设备正忙（如 ADC 转换中）|
+| `-ETIMEDOUT` | 等待超时（如等待 sensor ready 位）|
+| `-ENOMEM` | 内存分配失败 |
+
+## Device Tree Binding 规范
+
+**Compatible 命名**：`<vendor>,<device-name>`
+
+```yaml
+# dts/bindings/sensor/vendor,my-sensor.yaml
+compatible: "vendor,my-sensor"
+
+properties:
+  reg:
+    required: true
+  int-gpios:
+    type: phandle-array
+    description: 中断引脚
+  sample-rate:
+    type: int
+    default: 100
+    description: 采样率 (Hz)
+```
+
+**关键原则**：
+- DT 中只放硬件描述（地址、引脚、频率），不存放业务配置
+- 业务配置放入 Kconfig（`CONFIG_MY_SENSOR_SAMPLE_RATE`）
+- 使用标准 DT 属性名：`reg`（地址）、`interrupts`/`xxx-gpios`（中断）、`clocks`（时钟）
+
+## 多实例支持
+
+EC 中同类型外设常有多个实例（如多路温度传感器、多通道风扇）。驱动必须使用 `DT_INST_FOREACH_STATUS_OKAY` 宏支持多实例：
+
+```c
+/* ✓ 通过 DT_INST 宏从 DT 自动获取配置 */
+#define MY_SENSOR_DEFINE(inst) \
+    static struct my_sensor_data my_sensor_data_##inst; \
+    /* i2c_addr 从 DT reg 属性自动提取 */ \
+    static const struct my_sensor_config my_sensor_config_##inst = { \
+        .i2c_addr = DT_INST_REG_ADDR(inst), \
+    }; \
+    DEVICE_DT_INST_DEFINE(inst, ...);
+
+/* 遍历所有 status = "okay" 的实例 */
+DT_INST_FOREACH_STATUS_OKAY(MY_SENSOR_DEFINE)
+```
+
+## 电源管理要求
+
+所有 EC 驱动必须实现 `PM_DEVICE` 回调以支持系统休眠：
+
+```c
+static int my_driver_pm_action(const struct device *dev,
+                                enum pm_device_action action) {
+    switch (action) {
+    case PM_DEVICE_ACTION_SUSPEND:
+        // 保存关键寄存器上下文，关闭时钟
+        return 0;
+    case PM_DEVICE_ACTION_RESUME:
+        // 恢复寄存器上下文，重新使能
+        return 0;
+    case PM_DEVICE_ACTION_TURN_OFF:
+        // 完全断电（深度睡眠）
+        return 0;
+    case PM_DEVICE_ACTION_TURN_ON:
+        // 完全上电恢复（从深度睡眠唤醒）
+        return 0;
+    default:
+        return -ENOTSUP;
+    }
+}
+```
+
+## 初始化优先级
+
+EC 场景下的推荐初始化优先级顺序：
+
+| 阶段 | 优先级 | 设备类型 |
+|------|--------|----------|
+| `PRE_KERNEL_1` | 最低 | 基本 GPIO 控制器 |
+| `PRE_KERNEL_2` | 低 | 时钟控制器、引脚复用 |
+| `POST_KERNEL` | 中 | 总线控制器 (I2C/SPI/UART) |
+| `APPLICATION` | 高 | 外设子设备 (传感器/充电 IC 等) |
+
+原则：被依赖的设备应更早初始化（总线控制器先于挂载在其上的外设）。
+
+## 验证清单
+
+开发新驱动后需确认：
+
+- [ ] `compatible` 与 DT binding YAML 一致
+- [ ] 支持多实例（`DT_INST_FOREACH_STATUS_OKAY`）
+- [ ] 所有返回值为 `-errno` 格式
+- [ ] 实现了 `PM_DEVICE` 回调（至少 SUSPEND/RESUME）
+- [ ] 初始化优先级合理（不早于总线控制器）
+- [ ] 通过 Ztest 单元测试（含 mock 的 I2C/SPI 控制器）
+- [ ] 设备 shell 命令可查看状态（`device list` / `sensor get`）

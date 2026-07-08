@@ -1,0 +1,195 @@
+---
+title: 从 ITE IT557x 迁移
+---
+
+从 ITE IT557x（C51 8 位）迁移到 Chipsea CSCE250X（ARM Cortex-M33 32 位 + Zephyr RTOS）面临三重核心挑战：
+
+1. **内核架构跃迁**：C51 是 8 位哈佛架构 MCU，内存分为 CODE/XDATA/DATA 三个独立地址空间，CODE 需 Bank 切换（`L51_BANK.A51` 管理 4 个 Bank）。CSCE250X 为 32 位 Von Neumann 架构，统一线性地址空间。
+
+2. **运行时模型转变**：ITE 固件采用"服务标志位分发"——ISR 设置标志位（如 `F_Service_PCI`），`main_service()` 按优先级轮询。Zephyr 采用抢占式多线程模型。
+
+3. **硬件描述方式革命**：ITE 通过 `SET_MASK()`/`CLEAR_MASK()` 宏直接操作寄存器。Zephyr 将硬件描述分离到设备树中。
+
+以下基于 ITE IT557x ADL-N MRD 参考工程（`IT557x_ADL_N_MRD-ec-v0.21-220914/`）的真实代码进行对照分析。
+
+## 传统 EC 平台架构（ITE IT557x）
+
+ITE 固件采用四层代码组织：
+
+| 层级 | 路径 | 职责 |
+|------|------|------|
+| CHIP | `Code/CHIP/` | 芯片寄存器地址定义（`CHIPREGS.H`、`CHIPSFR.H`） |
+| CORE | `Code/CORE/` | 平台无关的 EC 核心框架（主循环、IRQ 分发、SMBus 协议、键盘扫描、ACPI 接口） |
+| API | `Code/API/` | 外设抽象层（GPIO 表驱动、ADC、PWM、PECI、I2C） |
+| OEM | `Code/OEM/` | 项目定制（电源序列、电池、风扇、GPIO 配置、键盘映射） |
+
+构建系统使用 Keil C51 + A51 汇编器 + BL51 链接器 + NMAKE。功能裁剪通过 `OEM_PROJECT.H` 中的 `#define SUPPORT_XXX TRUE/FALSE` 开关实现。
+
+### 主循环与服务标志位分发
+
+```c
+// CORE_MAIN.C — ITE EC 固件入口
+void main(void)
+{
+    Core_Initialization();   // 寄存器初始化、SMBus 初始化
+    Oem_Initialization();    // OEM 模块初始化
+    InitEnableInterrupt();   // 使能中断系统
+
+    while (1) {
+        main_service();      // 服务标志位分发（核心调度）
+    }
+}
+
+void main_service(void)
+{
+    if (F_Service_PCI)       { F_Service_PCI = 0;  service_pci();  }
+    if (F_Service_PCI2)      { F_Service_PCI2 = 0; service_pci2(); }
+    if (F_Service_MS_1)      { /* 1ms 定时器服务 */ }
+    if (F_Service_KEY)       { F_Service_KEY = 0;   service_scan(); }
+    if (F_Service_ACPI)      { F_Service_ACPI = 0;  service_acpi(); }
+    // ... 更多标志位
+}
+```
+
+定时器通过 `service_1mS()` 产生级联定时事件：1ms → 5ms → 10ms → 50ms → 100ms → 500ms → 1sec → 1min。
+
+## 架构差异对比
+
+| 维度 | ITE IT557x (C51) | Chipsea CSCE250X (Zephyr) |
+|------|-------------------|---------------------------|
+| CPU 内核 | 80390（C51 兼容），8 位 | ARM Cortex-M33，32 位 |
+| 频率 | 48-96 MHz | 120 MHz |
+| 地址空间 | 哈佛架构，CODE/XDATA/DATA 分离 | Von Neumann 架构，统一线性 |
+| 代码存储 | Bank 切换（4×32KB Common+Banks 1-3） | 统一 Flash（512KB） |
+| RAM | 4-16 KB XDATA + 256B DATA + 内部 SRAM | 256+ KB SRAM |
+| 运行时 | 服务标志位分发（协作式） | Zephyr RTOS 抢占式多线程 |
+| 定时器 | 1ms 定时器 → 软件级联 | 内核 Tick + k_timer + 独立线程周期 |
+| 外设访问 | `SET_MASK(GPDRx, BIT(n))` 直接寄存器 | 设备树 + 标准驱动 API |
+| GPIO 管理 | `#define` 命名宏 + `asGPIOConfReg[]` 表 | pinctrl DTS + `gpio_dt_spec` |
+| SMBus | `asSMBus[]` 寄存器映射表 + `bRWSMBus()` | Zephyr I2C API（`i2c_write_read()`） |
+| 电源序列 | `sPowerSEQ{func_ptr, delay, checkstatus}` 数组 | `power_seq_struct` + `pwrseq_thread` |
+| 电池管理 | SMBus 轮询表 + 定时 tick 分支 | 独立 `battery_thread` + 7 状态状态机 |
+| 中断分发 | IVECT 寄存器 → `IRQ_Service[]` 表（176 条） | ARM NVIC 向量表 |
+| 构建系统 | Keil C51 + NMAKE | CMake + west |
+
+## 功能模块逐一迁移映射
+
+### 电源序列：sPowerSEQ → pwrseq 框架
+
+**ITE 侧**（`OEM_POWER.C`）：
+```c
+typedef struct PowerSEQ {
+    FUNCT_PTR_B_V func;      // 步骤执行函数指针
+    WORD   delay;            // 执行后延时 (ms)
+    BYTE   checkstatus;      // 0=无条件执行, 非0=需等待条件满足
+} sPowerSEQ;
+
+const sPowerSEQ ADL_N_sSEQ_S5_to_S0[] = {
+    { PF_PWR_LED_ON,           0, 0 },
+    { PF_ADP_PRESENT,          0, 0 },
+    { PF_CHK_V3P3A_PGOOD_HI, 100, 1 },
+    { PF_EC_PWR_LATCH_HI,      0, 0 },
+    // ... 共 22 步
+};
+```
+
+**迁移动作**：
+- ITE `PF_xxx` 函数指针 → Zephyr `POWER_SIGNAL()` 宏引用
+- ITE `checkstatus=1` 等待条件 → `process_power_seq()` 内置超时轮询
+- ITE `delay` 字段 → 直接映射到 `power_seq_struct.delay_ms`
+- ITE `_PST_S5_to_S0` 等过渡状态 → `SYSTEM_S5_S0_STATE` 对应过渡状态
+
+### 键盘扫描：KSO/KSI 寄存器 → Zephyr kscan
+
+**ITE 侧**（`CORE_SCAN.C`）：写 KSO 输出寄存器逐列驱动，读取 KSI 输入寄存器获取行状态，经去抖、make/break 检测后生成扫描码。
+
+**迁移动作**：
+- ITE KSO/KSI 寄存器配置 → DTS `kbs_matrix` 节点的 `row-gpios`/`col-gpios` 属性
+- ITE `CORE_SCAN.C` 扫描码 → `oem_keymap.h` 键位映射表
+- ITE boot key 序列（F2→BIOS Setup）→ `kbs_boot_keyseq.h`
+
+### 电池与充电：SMBus 轮询表 → battery/charge 子系统
+
+**ITE 侧**（`OEM_BATTERY.C`）：
+```c
+const sSMB_CMD _SMB_BATT1_POLL_TBL[] = {
+    { SMB_WORD_READ, 0x09, &BATT1_VOLTAGE,    batt1_volt_success    },
+    { SMB_WORD_READ, 0x0B, &BATT1_RSOC,       batt1_rsoc_success    },
+    { SMB_WORD_READ, 0x08, &BATT1_TEMP,        batt1_temp_success    },
+    { SMB_WORD_READ, 0x0A, &BATT1_CURRENT,     batt1_current_success },
+    // ... 共 17 个轮询条目
+};
+```
+
+**迁移动作**：
+- ITE `_SMB_BATT1_POLL_TBL[]`（17 条 SMBus 命令）→ `bat1_polling_tabdata[]`
+- ITE `bRWSMBus(Channel, Protocol, Addr, Comd, Var, PECSupport)` → `i2c_write_read()`
+- ITE 分散的电池状态逻辑 → 集中到 7 状态状态机
+- ITE `_SMB_BATT1_ADDR=0x16` → DTS 中 I2C 子节点的 `reg` 属性
+
+### 主机通信：KBC 寄存器 → eSPI 驱动
+
+**ITE 侧**：通过 eSPI Peripheral Channel 完成，代码仍以 KBC 风格操作。`IRQ_INT24_KBCIBF()` 检测 IBF，`Data_To_Host()` 写入 KBHIKDOR 寄存器。eSPI Virtual Wire 由 `IRQ_INT154_eSPI_VWINT()` 处理。
+
+**迁移动作**：
+- ITE `IRQ_INT24_KBCIBF()` ISR → Zephyr eSPI 驱动的 IBF 事件 → `smchost_signal_request()`
+- ITE `Data_To_Host()` → `smchost` 框架自动管理 OBF
+- ITE SCI 事件发送 → `smchost_queue_sci(code)` + Virtual Wire 自动触发
+
+## 硬件描述转换实战
+
+ITE `OEM_GPIO.H` 的宏定义：
+```c
+#define ALL_SYS_PWRGD_HI()       SET_MASK(GPDRA, BIT(2))
+#define PM_PCH_PWROK_HI()        SET_MASK(GPDRA, BIT(1))
+#define PCH_RSMRST_HI()          SET_MASK(GPDRH, BIT(1))
+#define EC_PWR_LATCH_HI()        SET_MASK(GPDRH, BIT(4))
+```
+
+转换为 CSCE250X Zephyr 设备树：
+```dts
+&pinctrl {
+    pwr_ctrl_default: pwr_ctrl_default {
+        group1 {
+            pinmux = <PA2_GPIO>,  // ALL_SYS_PWRGD
+                     <PA1_GPIO>,  // PM_PCH_PWROK
+                     <PH1_GPIO>,  // PCH_RSMRST
+                     <PH4_GPIO>;  // EC_PWR_LATCH
+            drive-strength = "medium";
+        };
+    };
+};
+
+&i2c0 {
+    battery@16 {
+        compatible = "smart-battery";
+        reg = <0x16>;  // 对应 ITE _SMB_BATT1_ADDR
+    };
+    charger@12 {
+        compatible = "renesas,bd99950";
+        reg = <0x12>;  // 对应 ITE _SMB_CHGRA_ADDR
+    };
+};
+```
+
+## 分阶段迁移策略
+
+| 阶段 | 目标 | 从 ITE 提取的材料 | 验证 | 预计 |
+|------|------|-------------------|------|------|
+| 1：最小启动 | UART 输出 | 原理图 UART 引脚 | `uart:~$` 提示符 | 1-2 天 |
+| 2：GPIO 控制 | 引脚对齐 | `OEM_GPIO.H` ~200 个引脚定义 | Shell `gpio set/get` + 万用表 | 1-2 天 |
+| 3：I2C/SMBus | 读写电池寄存器 | `_SMB_BATT1_POLL_TBL[]` + `_SMB_CHGRA_POLL_TBL[]` | `i2c scan` + `i2c read` | 1-2 天 |
+| 4：电源序列 | S5→S0 上电 | `ADL_N_sSEQ_S5_to_S0[]`（22 步） | 逻辑分析仪捕获 + 上板测试 | 3-5 天 |
+| 5：键盘 + 通信 | 按键/SCI 事件 | `CORE_SCAN.C` 扫描码 + SCI 表 | 逐键验证 + `acpi_listen` | 3-5 天 |
+| 6：完整集成 | 全部功能 | 电池/风扇/热管理逻辑 | 功能验证清单 + 24h 压力 | 5-10 天 |
+
+## 常见陷阱
+
+1. **Bank 切换思维惯性**：C51 下函数分布在 4 个 Bank 中，迁移到 ARM 后应将分散在各 Bank 的逻辑重组到同一模块
+2. **内存模型转变**：C51 `uint8_t` 是自然选择，ARM 下可用 `uint32_t` 和标准结构体；但 EEPROM 持久化结构体需显式打包（`__attribute__((packed))`）
+3. **中断优先级重分配**：ARM NVIC 支持 256 级优先级——1ms 定时器和 eSPI VW 应设为高优先级
+4. **服务标志位 → 事件对象**：ITE 全局位标志无并发保护，Zephyr 使用独立 `k_event` 对象，需重新梳理事件依赖
+5. **时序假设失效**：裸机确定性指令时序在 RTOS 下不成立——电源序列等必须使用 `pwrseq` 框架
+6. **寄存器位操作原子性**：ARM 上 RMW 可能被打断，使用 `sys_set_bit()`/`sys_clear_bit()` 等原子操作
+7. **Bank 内分散的依赖函数也需要迁移**：ITE 的某些底层函数（如 SMBus 字节级操作）分布在 Bank 1 的公共区域，迁移到 I2C 时需一并处理
+8. **eSPI 配置完整性**：ITE 在 `OEM_PROJECT.H` 和 Port M pinmux 两处配置，CSCE250X 需 DTS 和 Kconfig 分别配置控制器和虚拟通道

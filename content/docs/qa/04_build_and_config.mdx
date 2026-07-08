@@ -1,0 +1,96 @@
+---
+title: 构建与配置调试
+---
+
+本章节涵盖 CMake 编译、Kconfig 配置、Device Tree 相关常见问题。
+
+## CMake / West 构建
+
+**Q：** 编译失败 — 找不到头文件 / 符号未定义
+
+**症状**：`fatal error: xxx.h: No such file or directory` 或 `undefined reference to xxx`。
+
+**Triage Checklist**：
+
+1. **定位** — 确认是 Zephyr 自带头文件还是模块内头文件
+2. 检查 `CMakeLists.txt` 中是否添加了正确的 `target_sources` / `zephyr_library`
+3. 检查 `prj.conf` 中对应的 `CONFIG_xxx=y` 是否开启
+4. 清理并重新构建：`west build -t clean && west build`
+5. **常见根因**：Kconfig 选项未开启导致相关源文件未编译
+
+**Q：** west build 找不到 Board
+
+**症状**：`west build -b myboard` 报错 "board 'myboard' not found"。
+
+**排查思路**：
+
+1. 确认 board 目录在 Zephyr 搜索路径中：
+   ```bash
+   west boards | grep myboard
+   ```
+2. 确认 board 目录下有 `board.cmake` 和 `Kconfig.board`
+3. 如果 board 在自定义目录，检查 `west.yml` 中是否添加到 manifest
+
+## Kconfig 配置
+
+**Q：** Kconfig 配置不生效
+
+**症状**：`.conf` 文件中设置了 `CONFIG_xxx=y`，但编译后功能未启用。
+
+**Triage Checklist**：
+
+1. **定位** — 检查 `.config`（生成文件）中该选项的实际值
+2. 检查是否有 `depends on` 依赖未满足
+3. 检查是否有 `select` 被覆盖或冲突
+4. 确认配置文件的优先级：
+   ```
+   优先级从低到高：
+   Kconfig.defconfig (board) → prj.conf → 命令行 -DCONFIG_xxx=y
+   ```
+5. 使用 `west build -t menuconfig` 或 `west build -t guiconfig` 可视化检查
+
+**Q：** 模块的 Kconfig 未加载
+
+**症状**：自定义模块的 Kconfig 选项在 menuconfig 中不可见。
+
+**排查思路**：
+
+1. 确认模块路径已在 `ZEPHYR_MODULES` 环境变量中
+2. 或在模块根目录放置 `zephyr/module.yml` 文件
+3. 确认 `zephyr/module.yml` 中声明了 `kconfig: Kconfig` 入口
+
+## Device Tree
+
+**Q：** Device Tree Overlay 未生效
+
+**症状**：DT 中配置的外设状态为 `disabled`，或配置的参数未应用。
+
+**Triage Checklist**：
+
+1. **定位** — 检查生成的 `build/zephyr/zephyr.dts` 看最终合并后的 DT
+2. 确认 overlay 文件的路径是否正确传递给构建系统：
+   ```bash
+   west build -b myboard -- -DDTC_OVERLAY_FILE=my.overlay
+   ```
+3. 检查 overlay 中节点标签（label）或路径是否与基础 DT 匹配
+4. 检查 `status = "okay"` 是否拼写正确（不是 `"ok"`）
+
+**Q：** 驱动 Compatible 匹配失败
+
+**症状**：设备驱动未绑定，`device_get_binding` 返回 NULL。
+
+**排查思路**：
+
+1. 确认 DT 节点中的 `compatible` 字符串与驱动源码中的 `DT_DRV_COMPAT` 宏一致
+2. 检查 `DEVICE_DT_INST_DEFINE` 是否正确使用匹配的 DT 实例号
+3. 用 `west build -t devicetree` 或 `west build -t compiled_dts` 查看完整 DT
+
+## 调试工具速查
+
+| 工具 | 用途 | 命令示例 |
+|------|------|----------|
+| `west build -t menuconfig` | Kconfig 可视化 | 交互式修改配置 |
+| `west build -t guiconfig` | Kconfig GUI | 图形界面查看配置 |
+| `west build -t devicetree` | 查看合并后 DT | 只打印 devicetree 到 stdout |
+| `build/zephyr/zephyr.dts` | 最终 DTS 文件 | 文本文件，可搜索 |
+| `build/zephyr/.config` | 最终 Kconfig | 文本文件，确认选项实际值 |

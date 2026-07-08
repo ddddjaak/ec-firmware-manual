@@ -1,0 +1,154 @@
+---
+title: 多线程与任务设计（Task & Threading Design）
+---
+
+EC 固件需要并行处理键盘扫描、电池监控、充电管理、热控制等多种任务。合理的线程与任务设计直接影响系统响应性和稳定性。
+
+## 线程分层模型
+
+推荐使用 **三层优先级模型** 组织 EC 任务：
+
+```
+优先级 (数值越小越高)    用途                   典型任务
+─────────────────────────────────────────────────────────
+ 0-2  (最高)           硬件 ISR              GPIO 中断、I2C 完成中断
+ 3-6  (高)             ISR→线程桥接          Work Queue、k_msgq 消费端
+ 7-10 (中)             周期性业务            键盘扫描 (8ms)、电池轮询 (1s)
+11-14 (低)             后台任务              日志刷新、统计上报、非紧急事件
+15-   (最低)           IDLE                  PM 进入低功耗
+```
+
+```c
+/* 定义线程优先级 */
+#define KBD_THREAD_PRIORITY     7
+#define BATTERY_THREAD_PRIORITY 8
+#define THERMAL_THREAD_PRIORITY 9
+#define FAN_THREAD_PRIORITY     10
+#define LOG_THREAD_PRIORITY     12
+#define IDLE_THREAD_PRIORITY    15
+
+/* 创建线程 */
+K_THREAD_DEFINE(kbd_tid, KBD_STACK_SIZE,
+                kbd_scan_thread, NULL, NULL, NULL,
+                KBD_THREAD_PRIORITY, 0, 0);
+```
+
+## 同步原语选择指南
+
+| 场景 | 推荐原语 | 原因 |
+|------|----------|------|
+| ISR → 线程通知 | `k_msgq` / `k_fifo` | 无锁、异步、支持批量 |
+| 线程间简单信号 | `k_sem` | 轻量，无数据传递 |
+| 多消费者共享资源 | `k_mutex` | 支持优先级继承 |
+| 一次性同步点 | `k_event` | 多事件等待，无需轮询 |
+| 周期唤醒 | `k_timer` + callback | 精确周期，低开销 |
+
+**关键原则**：ISR 中绝不使用可能阻塞的 API（`k_mutex_lock`、`k_sem_take` with `K_FOREVER`）。ISR 只做 `k_msgq_put` / `k_sem_give` / `k_event_post` 等非阻塞操作。
+
+```c
+/* ✓ ISR 中安全 */
+void gpio_isr(const struct device *dev, void *arg) {
+    uint8_t event = GPIO_EVENT_PRESS;
+    k_msgq_put(&event_queue, &event, K_NO_WAIT);  // 非阻塞
+}
+
+/* ✗ ISR 中不安全 */
+void bad_isr(const struct device *dev, void *arg) {
+    k_mutex_lock(&my_mutex, K_FOREVER);  // 可能导致死锁
+}
+```
+
+## 周期性任务设计
+
+EC 中最常见的任务模式是周期性轮询（如键盘扫描、电池状态查询）：
+
+```c
+/* 推荐模式：使用 k_timer + 回调 */
+void kbd_scan_timer_handler(struct k_timer *timer) {
+    // timer 回调在 system workqueue 中执行
+    // 不能做耗时操作
+    k_msgq_put(&kbd_queue, &SCAN_EVENT, K_NO_WAIT);
+}
+
+K_TIMER_DEFINE(kbd_timer, kbd_scan_timer_handler, NULL);
+// 在初始化中启动 8ms 周期
+k_timer_start(&kbd_timer, K_MSEC(8), K_MSEC(8));
+```
+
+**避免**：用 `k_sleep()` 实现周期 — 会有累计误差，且线程创建开销大。
+
+## 避免死锁
+
+EC 固件资源有限，死锁风险高于通用系统：
+
+```c
+/* ✗ 死锁风险 — 锁顺序不一致 */
+// 线程 A
+k_mutex_lock(&battery_mutex, K_FOREVER);
+k_mutex_lock(&charger_mutex, K_FOREVER);
+
+// 线程 B
+k_mutex_lock(&charger_mutex, K_FOREVER);
+k_mutex_lock(&battery_mutex, K_FOREVER);  // 可能死锁
+
+/* ✓ 修复 — 统一锁顺序 */
+// 无论哪个线程，始终先锁 battery_mutex 再锁 charger_mutex
+```
+
+**死锁预防清单**：
+- 所有线程按相同全局顺序获取锁
+- 使用 `K_NO_WAIT` 或 `K_MSEC(timeout)` 代替 `K_FOREVER`
+- 考虑用 `k_msgq` 替代多锁竞争（消息传递天然无死锁）
+- 开启 `CONFIG_DEBUG_THREAD_INFO=y` 监控线程状态
+
+## 栈大小配置
+
+EC 内存紧张，栈大小需精确控制：
+
+```bash
+# Shell 命令查看实际栈使用
+uart:~$ kernel stacks
+0x20001234 kbd_thread    (real size 1024): unused 688   usage 336 / 1024 (32%)
+0x20001890 battery_thread(real size 1536): unused 312   usage 1224 / 1536 (79%)  ← 需增大
+```
+
+**配置建议**：
+- ISR 栈：`CONFIG_ISR_STACK_SIZE=2048`（注意嵌套 ISR 累加）
+- Work Queue 栈：`CONFIG_SYSTEM_WORKQUEUE_STACK_SIZE=2048`
+- 业务线程栈：从 1024 起步，根据 `kernel stacks` 输出调整
+- 预留 30% headroom（`usage < 70%`）
+
+## 线程间通信模式
+
+EC 中推荐的三种线程间通信模式：
+
+```c
+/* 模式 1：事件通知 (k_event) — 适合多事件源等待 */
+uint32_t events = k_event_wait(&sys_events,
+    EVENT_AC_PLUGGED | EVENT_BATTERY_LOW | EVENT_LID_CLOSE,
+    false, K_FOREVER);
+if (events & EVENT_AC_PLUGGED) { ... }
+
+/* 模式 2：命令队列 (k_msgq) — 适合带数据的异步处理 */
+struct cmd_msg cmd;
+k_msgq_get(&cmd_queue, &cmd, K_FOREVER);
+switch (cmd.type) {
+case CMD_SET_CHARGE_CURRENT: ...
+case CMD_GET_BATTERY_INFO: ...
+}
+
+/* 模式 3：共享状态 + 互斥锁 — 适合多读少写场景 */
+k_mutex_lock(&state_mutex, K_FOREVER);
+sys_state.ac_present = true;
+sys_state.battery_level = level;
+k_mutex_unlock(&state_mutex);
+```
+
+## 验证清单
+
+- [ ] 所有线程有明确优先级，高位给 ISR 桥接，低位给后台任务
+- [ ] ISR 中只调用非阻塞 API（`k_msgq_put` / `k_sem_give` / `k_event_post`）
+- [ ] 锁获取顺序全局一致，避免死锁
+- [ ] 周期性任务使用 `k_timer` 而非 `k_sleep()` 循环
+- [ ] 线程栈使用率 < 70%，通过 `kernel stacks` 验证
+- [ ] 所有阻塞调用有超时参数（避免 `K_FOREVER` 除非逻辑必须）

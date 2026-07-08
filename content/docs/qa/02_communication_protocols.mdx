@@ -1,0 +1,98 @@
+---
+title: 通信协议调试
+---
+
+本章节涵盖 I2C / SPI / UART / eSPI 等常用通信协议的调试问题和排查方法。
+
+## I2C 调试
+
+**Q：** I2C 通信超时 / NAK 错误
+
+**症状**：设备初始化失败，日志显示 I2C transfer timeout 或 NACK。
+
+**Triage Checklist**：
+
+1. **复现** — 确认是某地址持续失败还是偶发
+2. **定位** — 用逻辑分析仪确认总线波形：
+   - 设备地址是否正确（7-bit vs 8-bit 左移）
+   - ACK 位是否正常
+   - SCL 频率是否在设备支持范围内
+3. **缩小** — 用 `i2c scan` shell 命令扫描总线，确认设备在线
+4. **根因** — 常见原因：
+   - Device Tree 中 `reg` 地址用了 8-bit 而非 7-bit
+   - 总线频率过高超出从设备能力
+   - SDA/SCL 上拉电阻缺失或阻值不当
+   - 从设备未完成上电复位
+5. **防护** — 驱动中增加重试逻辑（Zephyr I2C API 已内置 retry）
+
+**Q：** I2C 总线卡死
+
+**症状**：SDA 长期被拉低，所有 I2C 通信中断。
+
+**排查思路**：
+
+1. 确认是 Master 还是 Slave 拉低了 SDA
+2. 如果是 Slave 拉低（clock stretching 超时），检查从设备的电源/复位状态
+3. **恢复方法**：在 SCL 上发送 9 个时钟脉冲让 Slave 释放 SDA（需 GPIO bit-bang）
+
+
+## SPI 调试
+
+**Q：** SPI 数据异常 / 丢失
+
+**症状**：读取的数据全 0、全 0xFF 或与预期不一致。
+
+**排查思路**：
+
+1. 检查 CPOL/CPHA 模式是否与设备匹配（Mode 0/1/2/3）
+2. 检查 SPI 频率是否在设备范围内（某些 SPI Flash 有最低频率要求）
+3. 检查 CS# 信号的建立/保持时间
+4. 用逻辑分析仪对比 MOSI/MISO 波形
+
+
+## UART 调试
+
+**Q：** UART 丢帧或乱码
+
+**症状**：Console 输出乱码或丢失部分日志。
+
+**排查思路**：
+
+1. **波特率不匹配** — 确认 EC 和 Host 两侧波特率一致
+2. **FIFO 溢出** — 高频日志场景下，UART FIFO 可能溢出，降低日志量或用 DMA
+3. **时钟偏差** — 检查 UART 时钟源精度（内部 RC vs 外部晶振）
+4. **电平转换** — 确认 UART 电平（1.8V / 3.3V）匹配
+
+
+## eSPI 调试
+
+**Q：** eSPI 通道协商失败
+
+**症状**：EC 无法与 PCH 建立 eSPI 通信，系统不开机。
+
+**Triage Checklist**：
+
+1. **定位** — 检查 eSPI Reset# 信号是否释放
+2. 检查 IO 电压配置（1.8V vs 3.3V）
+3. 确认通道配置（Peripheral / Virtual Wire / OOB / Flash Access）匹配
+4. 检查 eSPI 频率（通常 20/33/50/66 MHz）
+
+**Q：** Virtual Wire 事件丢失
+
+**症状**：ACPI SCI/SMI 事件偶发丢失，OS 未响应 EC 中断。
+
+**排查思路**：
+
+1. 确认 Virtual Wire 索引配置正确
+2. 检查 eSPI 总线上是否有 CRC 错误（用逻辑分析仪解码）
+3. 确认 PCH 侧 VW 接收已使能
+
+
+## 调试工具速查
+
+| 工具 | 用途 | 命令示例 |
+|------|------|----------|
+| Zephyr Shell `i2c` | I2C 扫描/读写 | `i2c scan I2C_0` |
+| 逻辑分析仪 | 协议波形解码 | Saleae / DSLogic + I2C/SPI/UART decoder |
+| 示波器 | 信号完整性 | 检查边沿速度、振铃、串扰 |
+| 万用表 | 上拉电阻、电平 | 确认 SDA/SCL 上拉至 VDD |

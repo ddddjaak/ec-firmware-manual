@@ -1,0 +1,96 @@
+---
+title: USB & PD 调试
+---
+
+本章节涵盖 USB Power Delivery 协议协商、Type-C 接口检测相关的调试问题。
+
+## PD 协议协商
+
+**Q：USB PD 协商失败 — 无法进入高压充电**
+
+**症状**：Type-C 插入后始终停留在 5V，无法协商到 9V/15V/20V。
+
+**Triage Checklist**：
+
+1. **复现** — 确认是否所有适配器均失败，还是特定型号
+2. **定位** — 用 PD Analyzer（如 ChargerLAB POWER-Z / Total Phase）抓取 CC 线上的 BMC 通信：
+   - Source Capabilities 是否正常发送
+   - Sink Request 是否被 Source 正确 Accept
+3. **缩小** — 检查是物理层还是协议层问题：
+   - 物理层：CC 线上是否有 BMC 波形（用示波器看）
+   - 协议层：用 PD Analyzer 解码看消息序列
+4. **根因** — 常见原因：
+   - CC 上拉/下拉电阻配置错误（Rd/Rp 阻值）
+   - PD 消息中的 PDO (Power Data Object) 配置不匹配
+   - Cable 不支持所需电流（eMarker 检测遗漏）
+   - PD Policy Engine 状态机卡住（需检查状态转移逻辑）
+5. **防护** — 在状态机各节点加超时保护 + fallback 到 5V
+
+**Q：PD 3.1 EPR 协商后实际电压未变化**
+
+**症状**：协议层已协商到 28V EPR，但实际 Vbus 仍为 20V。
+
+**排查思路**：
+
+1. 确认 Charger IC 是否支持 EPR 模式（寄存器配置）
+2. 检查 EPR Source Capabilities Extended 消息是否被正确解析
+3. 确认 EPR Keep-Alive 消息是否周期性发送（EPR 模式下需定时维持）
+4. 用示波器确认 Vbus 实际电压
+
+---
+
+## Type-C 接口
+
+**Q：CC 线检测异常 — 无法识别插入方向**
+
+**症状**：Type-C 插入后无法识别正反插，或角色（DFP/UFP）判断错误。
+
+**Triage Checklist**：
+
+1. **定位** — 读取 CC1/CC2 引脚的 ADC 值，判断当前电平状态：
+   - Open → 未连接
+   - Rd (5.1kΩ to GND) → UFP 检测到 DFP
+   - Rp (不同值表示不同电流能力) → DFP 检测到 UFP
+   - Ra (to GND) → Audio/ Debug 附件
+2. **根因** — 常见原因：
+   - CC 线 PCB 走线阻抗异常
+   - 引脚 GPIO/ADC 复用配置错误
+   - Ra 下拉未使能（导致 Audio Accessory 误判）
+3. **防护** — 添加 ADC 阈值容差 + debounce 逻辑
+
+**Q：VCONN 供电异常**
+
+**症状**：带 eMarker 的线缆无法读取 Cable Identity。
+
+**排查思路**：
+
+1. 确认 VCONN 开关是否在 CC 检测完成后使能
+2. 检查 VCONN 供电能力（通常需要 ~5V/20mA）
+3. 确认是向未使用的 CC 引脚（非通信那个）提供 VCONN
+4. 用示波器测量 VCONN 上的电压和纹波
+
+---
+
+## Billboard 设备
+
+**Q：Billboard 设备未枚举**
+
+**症状**：DP Alt Mode 失败后，Windows 不显示 "Display connection might be limited" 提示。
+
+**排查思路**：
+
+1. 确认 Billboard Class 驱动在 Zephyr 中已使能 (`CONFIG_USB_DEVICE_BILLBOARD=y`)
+2. 检查 Billboard 的 USB 描述符是否正确（BOS descriptor + Billboard capability）
+3. 确认 Billboard 仅在 Alt Mode 失败时激活（Alt Mode 成功时不应出现）
+4. 检查 Alternate Mode 的 SVID 和 Mode 是否正确上报
+
+---
+
+## 调试工具速查
+
+| 工具 | 用途 | 命令示例 |
+|------|------|----------|
+| PD Analyzer | BMC 协议解码 | ChargerLAB POWER-Z / Total Phase PD Analyzer |
+| 示波器 | CC/Vbus 波形 | 差分探头测量 Vbus 电压变化 |
+| Zephyr USB Shell | USB 设备状态 | `usb device status` |
+| Type-C Tester | 接口功能验证 | 验证 CC/Ra/Rp 电阻配置 |

@@ -1,0 +1,80 @@
+---
+title: 固件升级调试
+---
+
+本章节涵盖 OTA、DFU、Bootloader 相关调试问题。
+
+## Bootloader 跳转
+
+**Q：** MCUboot 无法启动应用固件
+
+**症状**：芯片停留在 Bootloader，不跳转到 Application。
+
+**Triage Checklist**：
+
+1. **定位** — 通过串口日志确认 MCUboot 卡在哪一步
+2. 检查 Image Header 中的 magic number（正确的 magic: `0x96f3b83d`）
+3. 检查签名是否正确（开发阶段可用 `CONFIG_BOOT_SIGNATURE_TYPE_NONE=y`）
+4. 确认 Slot 0 的起始地址与 linker script 匹配
+5. **常见根因**：
+   - 未使用 `west sign` 或 `imagetool.py sign` 签名
+   - Flash 分区表与 Image 大小不匹配
+   - 升级 Image 的版本号低于当前版本（revert 保护机制触发）
+
+**Q：** A/B 分区升级后系统异常
+
+**症状**：OTA 升级后系统启动但功能异常。
+
+**排查思路**：
+
+1. 确认新 Image 在本机直接烧录是否正常（排除 Image 本身问题）
+2. 检查 Flash 写操作是否完整（校验 CRC/SHA256）
+3. 检查 Slot 1 → Slot 0 的 copy 过程是否完整
+
+## Flash 操作
+
+**Q：** Flash 写入 / 擦除失败
+
+**症状**：日志显示 Flash 操作错误码，或数据写入后读取不一致。
+
+**Triage Checklist**：
+
+1. **定位** — 确认失败地址是否对齐到 page/sector 边界
+2. 检查写操作地址是否在合法分区范围内
+3. 检查 Flash 写保护寄存器是否已关闭
+4. 确认擦除操作先于写操作（Flash 必须先擦后写）
+5. **常见根因**：
+   - 擦除粒度不对（page vs sector vs block）
+   - 在当前执行的 Flash 区域进行写/擦除（需从 RAM 执行）
+
+**Q：** 升级包校验失败
+
+**症状**：下载完成但 SHA256 校验不通过。
+
+**排查思路**：
+
+1. 检查下载的 Image 大小是否与预期一致
+2. 确认传输过程中无丢包（检查 UART/SPI 完整性和握手协议）
+3. 对比 OTA 传输前后的二进制内容（用 J-Link dump Flash 对比）
+4. 检查 Image 是否在 Flash 中发生 bit 翻转（硬件可靠性问题）
+
+## 写保护
+
+**Q：** 写保护无法解除
+
+**症状**：Flash 写入被拒绝，WP 寄存器为锁定状态。
+
+**排查思路**：
+
+1. 确认 WP# 引脚电平是否为释放状态
+2. 检查 Flash 控制器的锁定序列是否正确
+3. 某些芯片需要编程特定序列才能解锁（如写入 key 到特定地址）
+
+## 调试工具速查
+
+| 工具 | 用途 | 命令示例 |
+|------|------|----------|
+| `imagetool.py` | Image 签名/信息查看 | `imagetool.py sign ...` / `imagetool.py info` |
+| J-Link Commander | Flash 读写 | `savebin out.bin 0x08000000 0x10000` |
+| west flash | 烧录 | `west flash --runner jlink` |
+| MCUboot Shell | Boot 状态 | `mcuboot swap_type` |

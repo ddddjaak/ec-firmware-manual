@@ -1,0 +1,133 @@
+---
+title: 中断与时延调试
+---
+
+本章节涵盖中断处理延迟、实时性调优、定时器精度等与时间相关的调试问题。
+
+## 中断延迟
+
+**Q：ISR 延迟过高导致事件丢失**
+
+**症状**：键盘按键偶发丢失、I2C 传输超时、SCI 中断延迟过大。
+
+**Triage Checklist**：
+
+1. **复现** — 确认延迟是持续存在还是偶发；在什么系统负载下出现
+2. **定位** — 测量中断延迟：
+   ```c
+   // 在 ISR 入口用 GPIO toggle + 示波器测量
+   void isr_handler(const struct device *dev, void *arg) {
+       gpio_pin_set_dt(&debug_pin, 1);  // ISR 入口
+       // ... ISR 逻辑 ...
+       gpio_pin_set_dt(&debug_pin, 0);  // ISR 出口
+   }
+   ```
+   用示波器测量中断引脚沿 → GPIO toggle 的时间差
+3. **缩小** — 检查是否有更高优先级 ISR 长时间占用 CPU
+4. **根因** — 常见原因：
+   - 其他 ISR 中执行了耗时操作（I2C 传输、Flash 写）
+   - `irq_lock()` 批量关中断的保护区域过大
+   - 未配置中断嵌套（CONFIG_ZERO_LATENCY_IRQS）
+   - 同优先级中断排队处理延迟
+5. **防护** — ISR 中只做最小操作（置 flag、读关键寄存器），复杂逻辑放入线程
+
+**Q：中断优先级反转**
+
+**症状**：低优先级 ISR 阻塞了高优先级 ISR 的执行。
+
+**排查思路**：
+
+1. 检查各 ISR 的中断优先级配置：
+   ```c
+   IRQ_CONNECT(IRQ_NUM, 3, handler, NULL, 0);  // priority 3
+   IRQ_CONNECT(IRQ_NUM2, 1, handler2, NULL, 0); // priority 1 (higher)
+   ```
+2. 确认高优先级 ISR 是否被 `irq_lock()` 阻塞
+3. 检查是否有线程持锁期间被中断抢占导致的竞争
+4. 使用 Zephyr 的 `CONFIG_IRQ_OFFLOAD=y` 和 latency measurement 工具
+
+---
+
+## 临界区与关中断
+
+**Q：长时间关中断导致系统响应迟滞**
+
+**症状**：按键偶尔不响应、通信超时随机出现。
+
+**Triage Checklist**：
+
+1. **定位** — 找出关中断最长的代码段：
+   ```bash
+   # Zephyr Shell 查看中断关闭统计
+   kernel timing
+   ```
+2. 在怀疑的临界区前后加 GPIO toggle，用示波器测量 duration
+3. **根因** — 常见原因：
+   - `k_sem_take()` / `k_mutex_lock()` 在 ISR 上下文或关中断区域调用
+   - 循环中批量操作未释放 CPU（缺少 `k_yield()` 或 `k_sleep()`）
+   - `printk()` / `LOG_INF()` 在关中断区域调用（UART 输出会阻塞）
+4. **修复** — 将长临界区拆分为多个短临界区，中间释放中断
+
+---
+
+## 定时器精度
+
+**Q：Timer 精度漂移 — RTC 与 System Tick 不一致**
+
+**症状**：EC 内部时钟与实际时间偏差增大（每小时偏差数秒）。
+
+**排查思路**：
+
+1. 检查时钟源配置 — 内部 RC 振荡器精度通常 ±2%，外部晶振 ±20ppm
+2. 确认 `CONFIG_SYS_CLOCK_TICKS_PER_SEC` 配置是否合理
+3. 检查是否有长期运行的 timer callback 累积了误差
+4. **修复方案**：
+   - 使用外部 32.768kHz 晶振替代内部 RC
+   - 定期用 Host RTC 同步 EC 时钟（通过 Host Command 传递时间戳）
+
+**Q：`k_timer` 回调执行延迟**
+
+**症状**：定时任务（如键盘扫描 8ms 周期）实际间隔不稳定。
+
+**排查思路**：
+
+1. 确认系统 tick 频率：
+   ```c
+   CONFIG_SYS_CLOCK_TICKS_PER_SEC=1000  // 1ms tick 分辨率
+   ```
+2. 检查是否有大量同 tick 触发的 timer，导致 Burst 处理延迟
+3. 对时间敏感的周期性任务，考虑使用硬件定时器而非系统 tick timer
+4. 确认 timer callback 本身执行时间是否小于 timer 周期
+
+---
+
+## 竞态条件
+
+**Q：ISR 与线程之间的数据竞争**
+
+**症状**：共享变量偶发出错，难以稳定复现。
+
+**排查思路**：
+
+1. 确认 ISR 和线程共享的变量是否使用了原子操作：
+   ```c
+   // 错误 ❌
+   g_events |= EVENT_BIT;  // ISR 中直接修改
+   
+   // 正确 ✓
+   atomic_set_bit(&g_events, EVENT_BIT);  // 原子操作
+   ```
+2. 检查是否有 64-bit 变量在 32-bit MCU 上的读写不是原子的
+3. 使用 `volatile` 关键字确保编译器不优化掉读操作
+4. 考虑使用 Zephyr 的 `k_msgq` 替代共享变量进行 ISR→线程通信
+
+---
+
+## 调试工具速查
+
+| 工具 | 用途 | 命令示例 |
+|------|------|----------|
+| 示波器 + GPIO toggle | ISR 时延/关中断时长 | 触发模式 + 光标测量 |
+| Zephyr Shell `kernel` | 系统 tick/线程信息 | `kernel timing` / `kernel cycles` |
+| J-Link SystemView | RTOS 事件可视化 | 实时查看 ISR/线程切换 |
+| Logic Analyzer | 多信号时序分析 | 同时抓中断线+GPIO+总线 |

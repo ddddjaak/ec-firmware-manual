@@ -1,0 +1,133 @@
+---
+title: EC-Host 交互调试
+---
+
+本章节涵盖 EC 与主机之间的 Host Command、ACPI EC Space、SCI/SMI 中断联动相关的调试问题。
+
+## Host Command 协议
+
+**Q：Host Command 超时或无响应**
+
+**症状**：BIOS/OS 通过 0x62/0x66 端口发送命令后无响应，超时。
+
+**Triage Checklist**：
+
+1. **复现** — 确认是特定命令还是所有命令
+2. **定位** — 用逻辑分析仪抓 LPC/eSPI IO 周期：
+   - 检查 0x62 (EC Data) / 0x66 (EC Status) 端口是否有读写操作
+   - 确认 IBF (Input Buffer Full) / OBF (Output Buffer Full) 标志位状态
+3. **缩小** — 在 EC 侧 Host Command Handler 入口加日志：
+   ```c
+   LOG_INF("Host cmd received: 0x%02X, version: %d", cmd, version);
+   ```
+4. **根因** — 常见原因：
+   - EC 未能正确拉低/拉高 IBF/OBF 状态位
+   - Host Command 版本号不匹配（EC 只支持 v3，Host 发 v4）
+   - EC Command Handler 返回了非零错误码
+   - EC 侧命令处理超时（> 1 秒）导致 Host 认为超时
+5. **防护** — 在 Host Command Handler 中添加 watchdog 超时控制
+
+**Q：Host Command 参数传递异常**
+
+**症状**：命令被执行但参数错误，或返回数据不完整。
+
+**排查思路**：
+
+1. 确认 Host Command 协议版本（v2: 固定 256B / v3: 变长请求+响应）
+2. 检查 shared memory 区域是否足够容纳最大命令数据
+3. 确认 LPC/eSPI Memory Mapped 窗口基地址配置
+4. 用逻辑分析仪 dump 完整的数据传输序列
+
+---
+
+## ACPI EC Space
+
+**Q：ACPI EC 寄存器读写出错**
+
+**症状**：OS 读取电池电量、温度等 ACPI EC 寄存器返回异常值（0x00 或 0xFF）。
+
+**Triage Checklist**：
+
+1. **定位** — 确认是单个寄存器还是全部寄存器
+2. 检查 EC 侧对应的 ACPI 寄存器 handler 是否正确注册：
+   ```c
+   // 检查各 offset 对应的 read/write handler
+   acpi_ec_register_handler(address, read_fn, write_fn);
+   ```
+3. **根因** — 常见原因：
+   - 寄存器地址映射偏移量不一致（EC firmware vs ACPI ASL）
+   - Handler 函数未初始化变量（返回栈上的随机值）
+   - EC RAM 区域与 ACPI 访问区域重叠导致数据覆盖
+4. **防护** — 添加 handler 空指针检查 + 默认返回值
+
+**Q：Embedded Controller 设备在 OS 中不显示**
+
+**症状**：设备管理器中无 "ACPI Embedded Controller" 设备。
+
+**排查思路**：
+
+1. 确认 ACPI DSDT/SSDT 中定义了 ECDT (EC Device Table) 或 PNP0C09 设备
+2. 检查 ACPI EC 设备的 `_CRS` (Current Resource Settings) 中 IO 基址
+3. 确认 BIOS 是否正确填充了 ECDT 表
+4. 在 Linux 下检查：
+   ```bash
+   ls /sys/class/power_supply/    # 是否显示电池设备
+   dmesg | grep -i "ACPI.*EC"     # EC 初始化日志
+   ```
+
+---
+
+## SCI / SMI 中断
+
+**Q：SCI 中断未送达 — OS 未响应 EC 事件**
+
+**症状**：EC 设置了 SCI 事件位，但 OS 没有调用对应的 ACPI 方法。
+
+**Triage Checklist**：
+
+1. **定位** — 确认 SCI 链路：
+   - EC 侧：检查 SCI_EVT (0x06) 寄存器是否写入
+   - 中断线：检查 SCI# (通常 GPIO) 是否拉低
+   - Host 侧：检查是否进入 SCI handler
+2. 用示波器测量 SCI# 引脚 — 确认脉冲宽度足够被 PCH 识别
+3. 检查 ACPI `_Lxx` / `_Exx` 方法是否正确对应 Query Number
+4. **常见根因**：SCI# 引脚配置为 level-triggered 但代码用了 edge-triggered
+
+**Q：SMI 处理时间过长导致实时性降低**
+
+**症状**：SMI 处理期间系统卡顿、音频卡顿。
+
+**排查思路**：
+
+1. 测量 SMI handler 的执行时间（用 GPIO toggle + 示波器）
+2. 确认 SMI handler 中是否有耗时操作（Flash 写、I2C 等待）
+3. 尽可能将非紧急操作从 SMI 移到 SCI 或线程上下文
+4. SMI 设计原则：只做最小必要操作（读寄存器、写事件位），其余延迟到 OS handler
+
+---
+
+## Shared Memory
+
+**Q：EC-Host 共享内存数据不一致**
+
+**症状**：EC 写入的电池信息，Host 读到的是旧值或乱码。
+
+**排查思路**：
+
+1. 确认 EC 写入和 Host 读之间的同步机制：
+   - 通常 EC 先写数据，再写事件位触发 SCI
+   - Host 在 SCI handler 中才读数据
+2. 检查内存对齐 — 某些 Host 架构要求 4-byte 对齐
+3. 确认共享内存区域未被其他模块覆盖
+
+---
+
+## 调试工具速查
+
+| 工具 | 用途 | 命令示例 |
+|------|------|----------|
+| 逻辑分析仪 | LPC/eSPI IO 周期 | 解码 Memory/IO 读写 |
+| Linux `dmesg` | EC 相关日志 | `dmesg \| grep -i "ACPI.*EC\|EC.*ACPI"` |
+| Linux `acpidump` | 提取 ACPI 表 | `acpidump -o acpi.bin` |
+| RW-Everything | Windows 寄存器读写 | 读 0x62/0x66 端口 |
+| EC Console | Host Command 日志 | 观察收到的命令和参数 |

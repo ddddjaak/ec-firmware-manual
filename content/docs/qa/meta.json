@@ -1,0 +1,18 @@
+{
+  "title": "常见问题",
+  "pages": [
+    "index",
+    "01_battery_and_power",
+    "02_communication_protocols",
+    "03_peripherals_and_input",
+    "04_build_and_config",
+    "05_runtime_crash",
+    "06_firmware_upgrade",
+    "07_test_and_ci",
+    "08_usb_and_pd",
+    "09_thermal_management",
+    "10_ec_host_interaction",
+    "11_interrupt_and_timing",
+    "12_gpio_and_pinmux"
+  ]
+}

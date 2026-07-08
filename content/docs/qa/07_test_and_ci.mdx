@@ -1,0 +1,97 @@
+---
+title: 测试与 CI 调试
+---
+
+本章节涵盖 Ztest 单元测试、硬件在环测试、CI 环境问题。
+
+## Ztest 单元测试
+
+**Q：** 测试用例编译失败
+
+**症状**：`west build -b native_sim -- -DCONFIG_NATIVE_SIM=y` 时编译错误。
+
+**Triage Checklist**：
+
+1. **定位** — 确认是测试代码还是被测代码的编译错误
+2. 检查测试文件的 `#include` 路径是否与 `testcase.yaml` 中 `extra_configs` 匹配
+3. 确认 `CMakeLists.txt` 中 `target_sources` 包含了被测源文件
+4. **常见根因**：被测代码使用了真实硬件依赖（GPIO/I2C），需用 mock 或 FFF (Fake Function Framework) 替代
+
+**Q：** 测试在 native_sim 通过但在真机失败
+
+**症状**：Simulator 上测试全绿，烧到芯片后行为不一致。
+
+**排查思路**：
+
+1. natvie_sim 无真实硬件外设，确认被测代码是否有硬件依赖未 mock
+2. 检查时序相关代码（native_sim 无真实延迟）
+3. 检查内存模型差异（native_sim 内存充足，真机可能栈/堆不足）
+4. 增加 QEMU 仿真测试覆盖：
+   ```bash
+   west build -b mps2_an385 -t run -- -DCONFIG_QEMU=y
+   ```
+
+## 测试编写
+
+**Q：** 如何 Mock Zephyr 内核 API
+
+**推荐方式**：
+
+1. **FFF (Fake Function Framework)**：
+   ```c
+   // 在 tests/ 下创建 fff_mocks.h
+   #include "fff.h"
+   DEFINE_FFF_GLOBALS;
+   FAKE_VALUE_FUNC(int, k_sem_take, struct k_sem *, k_timeout_t);
+   ```
+2. **Zephyr Test Mock**：使用 `CONFIG_ZTEST_PARAMETRIX=y` 和 FFF 组合
+
+**Q：** 测试覆盖率不足
+
+**症状**：单元测试通过，但功能在真机仍出 bug。
+
+**排查思路**：
+
+1. 开启覆盖率报告：
+   ```bash
+   west build -b native_sim -- -DCONFIG_COVERAGE=y
+   west build -t coverage_report
+   ```
+2. 重点补充**边界条件**和**异常路径**的测试
+3. 考虑增加 Fuzz Test（用 `CONFIG_ZTEST_FUZZ=y`）
+
+## CI 环境
+
+**Q：** CI 构建失败但本地通过
+
+**症状**：CI pipeline 报错，本地 `west build` 正常。
+
+**Triage Checklist**：
+
+1. **定位** — 对比 CI 和本地的 Zephyr SDK 版本、工具链版本
+2. 检查 CI 的 west workspace 是否正确初始化（`west update` 是否拉取了所有模块）
+3. 检查 `west.yml` 中 manifest revision 是否与本地一致
+4. 检查 CI 环境中环境变量（`ZEPHYR_BASE`, `ZEPHYR_SDK_INSTALL_DIR`）
+5. **常见根因**：
+   - CI 使用了不同版本的工具链导致 warning-as-error
+   - 依赖的 module 在 CI 中未正确拉取
+
+**Q：** 硬件在环 (HIL) 测试不稳定
+
+**症状**：部分 HIL 用例偶发失败，重试后通过。
+
+**排查思路**：
+
+1. 确认测试环境（供电、接线、温度）是否稳定
+2. 检查是否有时序敏感操作未加等待时间
+3. 确认测试板与 DUT (Device Under Test) 的通信信道是否可靠
+4. 增加失败重试和详细日志，记录每次失败的上下文
+
+## 调试工具速查
+
+| 工具 | 用途 | 命令示例 |
+|------|------|----------|
+| `west build -t run` | 执行 native_sim 测试 | 自动编译并运行 |
+| `west build -t coverage_report` | 覆盖率报告 | 生成 HTML 覆盖率报告 |
+| `ztest` runner | Ztest 测试运行 | `west test` |
+| twister | Zephyr 测试框架 | `./scripts/twister -p native_sim -T tests/` |

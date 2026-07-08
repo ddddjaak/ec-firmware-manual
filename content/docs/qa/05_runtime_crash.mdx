@@ -1,0 +1,118 @@
+---
+title: 运行时异常调试
+---
+
+本章节涵盖 Hard Fault、看门狗复位、内存问题等运行时异常。
+
+## Hard Fault / 异常复位
+
+**Q：** 芯片不明原因复位
+
+**症状**：正常运行中芯片突然复位，日志丢失。
+
+**Triage Checklist**：
+
+1. **复现** — 记录复现频率和触发条件（特定操作后？随机？）
+2. **定位** — 读取复位原因寄存器，区分复位源：
+   - 看门狗复位 (WDT)
+   - 低电压复位 (BOR)
+   - 软件复位 (SYSRESETREQ)
+   - Hard Fault → NMI → 最终触发复位
+3. 启用 Hard Fault Handler 日志输出：
+   ```c
+   // 在 CONFIG_ARM_HARDFAULT_HANDLER=y 下，
+   // 利用 Fault Analyzer 打印寄存器快照
+   ```
+4. **常见根因**：
+   - 空指针解引用
+   - 栈溢出（检查线程栈配置）
+   - 对禁用的外设寄存器读写
+   - Flash 写操作未按对齐要求
+
+**Q：** Hard Fault 发生时如何定位
+
+**步骤**：
+
+1. 确保 `CONFIG_FAULT_DUMP=2` 开启（输出详细寄存器信息）
+2. 从 Hard Fault 输出中获取 PC（程序计数器）值和 LR（链接寄存器）值
+3. 使用 `addr2line` 反查地址对应源码行：
+   ```bash
+   arm-none-eabi-addr2line -e build/zephyr/zephyr.elf <PC值>
+   ```
+4. 如果 PC 指向异常地址（如 0x00000000 或 0xFFFFFFFF），检查函数指针或 vtable 是否被覆盖
+
+## 看门狗 (Watchdog)
+
+**Q：** 看门狗超时复位
+
+**症状**：系统正常运行一段时间后复位，复位原因寄存器指向 WDT。
+
+**排查思路**：
+
+1. 确认看门狗喂狗周期是否合理（通常 1-5 秒）
+2. 检查是否有长时间阻塞操作（如 Flash 擦写期间禁止喂狗）
+3. 检查是否有高优先级 ISR 长时间占用 CPU，导致喂狗线程无法调度
+4. 临时延长看门狗超时时间定位是哪个任务导致：
+   ```c
+   CONFIG_WDT_NRFX_MAX_WINDOW_MS=10000  // 调试时临时增大
+   ```
+
+## 栈溢出
+
+**Q：** 线程栈溢出导致崩溃
+
+**症状**：特定功能触发后系统 panic，日志显示 `MPU FAULT` 或 `Stack overflow`。
+
+**Triage Checklist**：
+
+1. **定位** — 用 Zephyr Shell 命令检查线程栈使用：
+   ```bash
+   kernel stacks    # 显示所有线程栈使用率
+   ```
+2. 确认 `CONFIG_THREAD_STACK_INFO=y` 已开启
+3. 增大可疑线程的栈大小：
+   ```c
+   #define MY_STACK_SIZE 2048  // 从 1024 增大
+   ```
+4. 检查是否有递归调用、大局部变量（大数组在栈上分配）
+
+## 内存泄漏
+
+**Q：** 长时间运行后内存耗尽
+
+**症状**：运行数小时/数天后系统崩溃，日志显示 `alloc failed` 或 heap 不足。
+
+**排查思路**：
+
+1. **定位** — 开启 heap 监控：
+   ```c
+   CONFIG_SYS_HEAP_RUNTIME_STATS=y
+   CONFIG_SYS_HEAP_INFO=y
+   ```
+2. Shell 命令查看 heap 使用：
+   ```bash
+   kernel heap      # 查看 heap 统计
+   ```
+3. 检查每个 `k_malloc` 是否有对应的 `k_free`
+4. 检查是否有在循环中分配但未释放的 buffer
+
+## 断言失败 (Assertion)
+
+**Q：** __ASSERT 触发 panic
+
+**症状**：运行中触发 `__ASSERT` 失败，系统进入 panic 状态。
+
+**排查思路**：
+
+1. 定位断言所在的源文件和行号（通常 panic 日志会输出）
+2. 分析断言条件，反向推导导致条件失败的上游数据流
+3. 如果是参数校验断言，回溯调用链确认参数来源
+
+## 调试工具速查
+
+| 工具 | 用途 | 命令示例 |
+|------|------|----------|
+| `addr2line` | PC 地址→源码行 | `arm-none-eabi-addr2line -e zephyr.elf 0x08001234` |
+| `arm-none-eabi-objdump` | 反汇编 | `arm-none-eabi-objdump -dS zephyr.elf \| less` |
+| Zephyr Shell | 运行时状态 | `kernel stacks` / `kernel heap` / `kernel cycles` |
+| J-Link GDB Server | 硬件调试 | 设置断点、单步、查看寄存器/内存 |

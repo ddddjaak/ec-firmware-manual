@@ -1,0 +1,126 @@
+---
+title: GPIO / Pinmux 调试
+---
+
+本章节涵盖 GPIO 功能冲突、引脚配置、电气特性相关的调试问题。
+
+## 引脚功能冲突
+
+**Q：外设不工作 — 怀疑引脚被其他功能占用**
+
+**症状**：UART 无输出 / I2C 无波形 / PWM 无信号，但配置看似正确。
+
+**Triage Checklist**：
+
+1. **定位** — 使用 Zephyr 的 pinmux 调试命令：
+   ```bash
+   west build -t pinctrl   # 查看所有引脚分配
+   ```
+2. 检查生成的 `build/zephyr/pinctrl_map.c` 中是否有冲突
+3. **根因** — 常见原因：
+   - 两个 DT 节点配置了同一个物理引脚
+   - 某驱动的 `pinctrl-0` 覆盖了另一个驱动的引脚配置
+   - 芯片默认功能与配置功能不一致（如默认为 GPIO，需切为 AF）
+
+**Q：UART / I2C 功能正常，但 GPIO 读写出错**
+
+**症状**：正常工作一段时间后，GPIO 读回的值与预期不符。
+
+**排查思路**：
+
+1. 确认 GPIO 引脚是否在运行时被其他外设重新配置
+2. 检查是否有 DT overlay 在启动后期才应用，导致引脚功能被覆盖
+3. 用 `west build -t pinctrl` 检查最终引脚映射
+
+---
+
+## Pull-up / Pull-down
+
+**Q：外部信号未连接时电平不确定**
+
+**症状**：GPIO 输入在没有外部驱动时读到随机值（0/1 交替）。
+
+**Triage Checklist**：
+
+1. **定位** — 用万用表测量引脚电压：如果悬空，电压通常在 1V-2V 之间漂移
+2. 检查 DT 中是否配置了 bias：
+   ```dts
+   &pinctrl {
+       my_pin: my_pin_default {
+           pinmux = <MY_PIN_GPIO>;
+           bias-pull-up;        // 内部上拉
+           // bias-pull-down;   // 或内部下拉
+           // bias-disable;     // 无 bias（悬空）
+       };
+   };
+   ```
+3. **根因** — 常见原因：
+   - DT 中 `bias-disable` 但硬件上无外部上拉/下拉
+   - 内部 pull 阻值太大（如 100kΩ），对抗不了 PCB 漏电流
+   - 外部上拉电阻未焊接或阻值错误
+4. **防护** — 关键输入信号外加外部上拉/下拉电阻（比内部可靠）
+
+**Q：I2C SDA/SCL 上拉不生效**
+
+**症状**：I2C 总线偶尔通信失败，波形上看到上升沿很慢。
+
+**排查思路**：
+
+1. 检查 I2C 引脚是否配置了 `bias-pull-up`（I2C 规范要求 Open-Drain + Pull-up）
+2. 计算上拉电阻值：通常 2.2kΩ-4.7kΩ（400kHz）/ 1kΩ-2.2kΩ（1MHz）
+3. 用示波器看 SCL/SDA 上升沿时间 — 过长说明上拉太弱或总线电容太大
+4. 确认 GPIO 输出模式是 Open-Drain 而非 Push-Pull
+
+---
+
+## 中断触发模式
+
+**Q：GPIO 中断不触发或重复触发**
+
+**症状**：按键按下无反应，或一次按下触发多次中断。
+
+**Triage Checklist**：
+
+1. **定位** — 确认中断触发模式：
+   ```dts
+   interrupts = <GPIO_INT_LEVEL_LOW>;   // 电平触发（需手动清除）
+   interrupts = <GPIO_INT_EDGE_FALLING>; // 下降沿触发
+   ```
+2. **根因** — 常见原因：
+   - 使用 Level-triggered 但 ISR 中未清除中断源 → 反复触发
+   - 使用 Edge-triggered 但信号有抖动 → 多次触发（需软件 debounce）
+   - 中断优先级配置过低，被其他 ISR 屏蔽
+3. **防护**：
+   - 机械按键：使用 edge-triggered + 30-50ms debounce
+   - 电平变化信号（如 AC 插入）：使用 level-triggered + 在 ISR 中清除源
+   - 通信中断（如 I2C）：保持 edge-triggered，在 ISR 中读状态寄存器
+
+---
+
+## 驱动强度与电气特性
+
+**Q：高速信号波形畸变**
+
+**症状**：SPI CLK > 10MHz 或 I2C 1MHz 时通信不稳定。
+
+**排查思路**：
+
+1. 检查 GPIO 驱动强度配置 — 高速信号需要 higher drive strength：
+   ```dts
+   drive-strength = <4>;   // mA, 值越大驱动能力越强
+   ```
+2. 检查 slew rate 配置 — Fast slew rate 改善边沿速度
+3. PCB 层面：缩短走线长度、减小负载电容、使用终端匹配电阻
+4. 用示波器看信号眼图 — 确认过冲/下冲在允许范围内
+
+---
+
+## 调试工具速查
+
+| 工具 | 用途 | 命令示例 |
+|------|------|----------|
+| `west build -t pinctrl` | 引脚分配查看 | 列出所有引脚功能 |
+| `build/zephyr/pinctrl_map.c` | 最终引脚映射 | 文本文件，直接查看 |
+| 万用表 | 电平/上拉检测 | 测直流电压 + 电阻 |
+| 示波器 | 信号波形 | 看边沿速度/振铃/串扰 |
+| Zephyr Shell `gpio` | GPIO 手动控制 | `gpio get PORT0 3` / `gpio set PORT0 3 1` |
