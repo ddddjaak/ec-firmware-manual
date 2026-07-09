@@ -104,9 +104,7 @@ content/docs/meta.json        → root: [getting-started, development, porting, 
 
 ## EC 固件参考
 
-`EC-Zephyr/`（独立仓库，已在 `.gitignore`）— 文档中代码示例来源：
-- `ecfw-zephyr/app/` — 13 功能模块
-- `ecfw-zephyr/drivers/` — 18 设备驱动
-- `ecfw-zephyr/boards/` — 板级支持包
+文档中的代码示例来源于 EC 固件仓库和参考实现。这些目录不在本仓库内，需要读取 EC 代码时，必须先向用户确认其本地路径。
 
-`IT557x_ADL_N_MRD-ec-v0.21-220914/` — ITE IT557x 参考实现（ch7 迁移指南用）。
+常见参考源（实际路径由用户指定）：
+- EC Zephyr 固件仓库 — `app/` 功能模块、`drivers/` 设备驱动、`boards/` 板级支持包

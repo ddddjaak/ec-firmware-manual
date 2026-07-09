@@ -7,7 +7,7 @@
     "dev": "next dev",
     "prebuild": "node scripts/generate-params.mjs && node scripts/generate-search-index.mjs",
     "build": "next build",
-    "build:static": "set NEXT_STATIC_EXPORT=1 && next build",
+    "build:static": "cross-env NEXT_STATIC_EXPORT=1 next build",
     "start": "next start",
     "postinstall": "fumadocs-mdx"
   },
@@ -29,6 +29,7 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "cross-env": "^10.1.0",
     "playwright": "^1.61.1",
     "tailwindcss": "latest",
     "typescript": "latest"
