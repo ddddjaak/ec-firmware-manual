@@ -61,13 +61,13 @@ title: 迁移概览
 
   C51 8 位 → ARM 32 位，架构差异最大。Bank 切换、哈佛内存模型、服务标志位分发全部需要重构。但 ITE 在国内笔记本市场的保有量最大，是国产替代的核心场景。
 
-  [ITE 迁移指南 →](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec/01_ite)
+  [ITE 迁移指南 →](/zephyr-ec-learning-system/docs/porting/06_migration_from_legacy_ec/01_ite)
 
 - **从 Nuvoton NPCX 迁移**
 
   同为 ARM 架构，内存模型一致。核心差异在于 BSP HAL → Zephyr 驱动模型的转换和外设配置方式（寄存器宏 → DTS）。NPCX 在 Chromebook 生态中广泛使用，迁移价值高。
 
-  [Nuvoton 迁移指南 →](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec/02_nuvoton)
+  [Nuvoton 迁移指南 →](/zephyr-ec-learning-system/docs/porting/06_migration_from_legacy_ec/02_nuvoton)
 
 </div>
 
@@ -81,4 +81,4 @@ title: 迁移概览
 4. **逻辑分析仪是必备工具**：电源序列、总线通信等时序行为必须用仪器验证
 5. **分阶段交付**：Phase 1 最小启动 → 2 GPIO → 3 总线 → 4 电源 → 5 输入设备 → 6 完整集成
 
-> 详细的通用分阶段策略参见 [新平台移植流程](/ec-firmware-manual/docs/porting/01_porting_guide)。
+> 详细的通用分阶段策略参见 [新平台移植流程](/zephyr-ec-learning-system/docs/porting/01_porting_guide)。

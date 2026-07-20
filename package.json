@@ -1,5 +1,5 @@
 {
-  "name": "ec-firmware-manual",
+  "name": "zephyr-ec-learning-system",
   "version": "2.0.0",
   "description": "Chipsea Zephyr EC Firmware Development Manual — powered by Fumadocs",
   "private": true,

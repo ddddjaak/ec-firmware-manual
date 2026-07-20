@@ -1,8 +1,8 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
-# CLAUDE.md — Chipsea Zephyr EC Manual
+# AGENTS.md — Chipsea Zephyr EC Manual
 
 Fumadocs (Next.js 16) 构建的 EC 固件开发手册。源文件：55+ `.mdx` 在 `content/docs/`。
 

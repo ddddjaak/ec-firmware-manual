@@ -4,7 +4,7 @@ export const baseOptions: BaseLayoutProps = {
   nav: {
     title: (
       <img
-        src="/ec-firmware-manual/media/chipsea-logo.png"
+        src="/zephyr-ec-learning-system/media/chipsea-logo.png"
         alt="Chipsea 芯海科技 · 返回首页"
         className="h-7 w-auto"
       />

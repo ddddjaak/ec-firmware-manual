@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           search={{
             SearchDialog: StaticSearchDialog,
             options: {
-              api: '/ec-firmware-manual/api/search.json',
+              api: '/zephyr-ec-learning-system/api/search.json',
             },
           }}
         >

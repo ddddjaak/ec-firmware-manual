@@ -253,4 +253,4 @@ pwm_set_dt(&pwm_spec, period_ns, pulse_ns);
    - **完全重写**（推荐）：用 Zephyr 驱动 API 重写所有外设访问，长期维护成本最低
    - **适配层**（过渡方案）：写一层薄适配将 Nuvoton HAL API 映射到 Zephyr API，适合快速验证但不应作为最终方案
 
-> **参考**：通用迁移流程和分阶段策略详见 [新平台移植流程](/ec-firmware-manual/docs/porting/01_porting_guide)。
+> **参考**：通用迁移流程和分阶段策略详见 [新平台移植流程](/zephyr-ec-learning-system/docs/porting/01_porting_guide)。

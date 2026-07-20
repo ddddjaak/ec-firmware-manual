@@ -7,7 +7,7 @@ const isStaticExport = process.env.NEXT_STATIC_EXPORT === '1';
 const nextConfig = {
   output: isStaticExport ? ('export' as const) : undefined,
   trailingSlash: true,
-  basePath: '/ec-firmware-manual',
+  basePath: '/zephyr-ec-learning-system',
   images: {
     unoptimized: true,
   },

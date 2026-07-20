@@ -70,7 +70,7 @@ title: 移植与定制
 
 <div className="step-cards my-4">
 
-<a className="step-card" href="/ec-firmware-manual/docs/porting/01_porting_guide">
+<a className="step-card" href="/zephyr-ec-learning-system/docs/porting/01_porting_guide">
   <span className="step-number" style={{"background":"linear-gradient(135deg, #d97706, #f59e0b)"}}>①</span>
   <div className="step-content">
     <strong>新平台移植流程</strong>
@@ -81,7 +81,7 @@ title: 移植与定制
 
 <div className="step-connector"></div>
 
-<a className="step-card" href="/ec-firmware-manual/docs/porting/02_board_initialization">
+<a className="step-card" href="/zephyr-ec-learning-system/docs/porting/02_board_initialization">
   <span className="step-number" style={{"background":"linear-gradient(135deg, #d97706, #e5980b)"}}>②</span>
   <div className="step-content">
     <strong>板级初始化</strong>
@@ -92,7 +92,7 @@ title: 移植与定制
 
 <div className="step-connector"></div>
 
-<a className="step-card" href="/ec-firmware-manual/docs/porting/03_devicetree_and_driver">
+<a className="step-card" href="/zephyr-ec-learning-system/docs/porting/03_devicetree_and_driver">
   <span className="step-number" style={{"background":"linear-gradient(135deg, #ca8a04, #d4a017)"}}>③</span>
   <div className="step-content">
     <strong>设备树与驱动适配</strong>
@@ -103,7 +103,7 @@ title: 移植与定制
 
 <div className="step-connector"></div>
 
-<a className="step-card" href="/ec-firmware-manual/docs/porting/04_kconfig_and_optimization">
+<a className="step-card" href="/zephyr-ec-learning-system/docs/porting/04_kconfig_and_optimization">
   <span className="step-number" style={{"background":"linear-gradient(135deg, #b7791f, #c6902a)"}}>④</span>
   <div className="step-content">
     <strong>功能与资源裁剪</strong>
@@ -114,7 +114,7 @@ title: 移植与定制
 
 <div className="step-connector"></div>
 
-<a className="step-card" href="/ec-firmware-manual/docs/porting/05_new_driver_development">
+<a className="step-card" href="/zephyr-ec-learning-system/docs/porting/05_new_driver_development">
   <span className="step-number" style={{"background":"linear-gradient(135deg, #a16207, #b8860b)"}}>⑤</span>
   <div className="step-content">
     <strong>新驱动开发流程</strong>
@@ -129,7 +129,7 @@ title: 移植与定制
 
 国产替代的核心路径。从 ITE 或 Nuvoton 平台提取硬件配置，逐模块迁移到芯海 Zephyr EC。
 
-> 迁移不只是换芯片——是 C51 裸机 → ARM Zephyr RTOS 的架构升级。详见 [迁移概览](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec)。
+> 迁移不只是换芯片——是 C51 裸机 → ARM Zephyr RTOS 的架构升级。详见 [迁移概览](/zephyr-ec-learning-system/docs/porting/06_migration_from_legacy_ec)。
 
 <div className="grid-cards my-4">
 
@@ -137,13 +137,13 @@ title: 移植与定制
 
   C51 8 位 → ARM 32 位，架构差异最大。ITE 在国内笔记本市场保有量最大，是国产替代的核心场景。
 
-  [ITE 迁移指南 →](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec/01_ite)
+  [ITE 迁移指南 →](/zephyr-ec-learning-system/docs/porting/06_migration_from_legacy_ec/01_ite)
 
 - **从 Nuvoton NPCX 迁移**
 
   同为 ARM 架构，迁移难度较低。NPCX 在 Chromebook 生态中广泛使用，BSP HAL → Zephyr 驱动模型是核心转换点。
 
-  [Nuvoton 迁移指南 →](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec/02_nuvoton)
+  [Nuvoton 迁移指南 →](/zephyr-ec-learning-system/docs/porting/06_migration_from_legacy_ec/02_nuvoton)
 
 </div>
 
@@ -151,7 +151,7 @@ title: 移植与定制
 
 无论走哪条路径，最终都要通过同样的验证清单——板子跑起来、外设调通、性能达标。
 
-<a className="step-card" href="/ec-firmware-manual/docs/porting/07_bringup_checklist">
+<a className="step-card" href="/zephyr-ec-learning-system/docs/porting/07_bringup_checklist">
   <span className="step-number" style={{"background":"linear-gradient(135deg, #059669, #10b981)"}}>⑦</span>
   <div className="step-content">
     <strong>新板 Bringup 清单</strong>
@@ -164,8 +164,8 @@ title: 移植与定制
 
 | 场景 | 直接跳到 |
 |------|----------|
-| 全新芯片平台，从零开始 | [① 移植流程](/ec-firmware-manual/docs/porting/01_porting_guide) |
-| 已有板级代码，需适配外设 | [③ 设备树与驱动适配](/ec-firmware-manual/docs/porting/03_devicetree_and_driver) |
-| 从 ITE IT557x EC 国产替代 | [ITE 迁移指南](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec/01_ite) |
-| 从 Nuvoton NPCX EC 国产替代 | [Nuvoton 迁移指南](/ec-firmware-manual/docs/porting/06_migration_from_legacy_ec/02_nuvoton) |
-| 板子已跑起来，做最终验证 | [⑦ Bringup 清单](/ec-firmware-manual/docs/porting/07_bringup_checklist) |
+| 全新芯片平台，从零开始 | [① 移植流程](/zephyr-ec-learning-system/docs/porting/01_porting_guide) |
+| 已有板级代码，需适配外设 | [③ 设备树与驱动适配](/zephyr-ec-learning-system/docs/porting/03_devicetree_and_driver) |
+| 从 ITE IT557x EC 国产替代 | [ITE 迁移指南](/zephyr-ec-learning-system/docs/porting/06_migration_from_legacy_ec/01_ite) |
+| 从 Nuvoton NPCX EC 国产替代 | [Nuvoton 迁移指南](/zephyr-ec-learning-system/docs/porting/06_migration_from_legacy_ec/02_nuvoton) |
+| 板子已跑起来，做最终验证 | [⑦ Bringup 清单](/zephyr-ec-learning-system/docs/porting/07_bringup_checklist) |
